@@ -137,3 +137,7 @@ docker compose --profile replay run --rm replay   # replay; writes ./reports/rep
 ```
 
 CI (`.github/workflows/ci.yml`) runs typecheck, build, tests with coverage, and the snapshot check on every push and pull request.
+
+## API documentation
+
+With the service running, Swagger UI is at `http://localhost:3000/docs` and the raw OpenAPI JSON at `http://localhost:3000/docs/json`. More request bodies are in [`docs/API-EXAMPLES.md`](docs/API-EXAMPLES.md).
