@@ -79,3 +79,4 @@ None of this proves the model is right, because the simulator uses the same mode
 3. Randomize the starting price a little on live routes, so the price effect can be estimated instead of inferred from the old rule.
 4. Model driver availability and capacity directly, and add fairness limits on offers per driver.
 5. Add recency weighting, plus a second on-time model if there is enough data.
+6. Connect the service to a real database through an ORM or query builder such as Kysely (typed SQL, a good fit for the read-heavy queries here) or TypeORM. Only the repositories change: the history module's `HistorySnapshotStore` would load from tables instead of CSV files, and the reload check would use a change marker (a `max(updated_at)` or version column) instead of file timestamps. Add migrations, an index on `(market, scheduled_start)`, and log each plan the service returns (with its `modelVersion`) so shadow mode and the later experiment have data to compare.
