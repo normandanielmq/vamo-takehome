@@ -1,0 +1,43 @@
+{
+  "name": "vamo-takehome",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Route offer ranking service",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --config jest.config.js",
+    "test:snapshot": "jest --config test/jest-snapshot.json",
+    "test:e2e": "jest --config test/jest-e2e.json",
+    "replay": "npm run build && node dist/replay/replay.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.10",
+    "@nestjs/core": "^11.2.10",
+    "@nestjs/platform-express": "^11.2.10",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "csv-parse": "^7.0.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.2.10",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "^6.0.3"
+  }
+}
