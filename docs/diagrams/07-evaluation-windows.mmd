@@ -1,0 +1,7 @@
+flowchart LR
+  a[Data start] --> b[Train, early window]
+  b --> c[Early cutoff: headline cutoff minus 14 days]
+  c --> d[Early test: 14 days]
+  d --> e[Headline cutoff: last day minus 29 days]
+  e --> f[Headline test: last 30 days]
+  f --> g[Data end]

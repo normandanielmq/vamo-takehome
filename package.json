@@ -16,6 +16,7 @@
     "test:snapshot": "jest --config test/jest-snapshot.json",
     "test:e2e": "jest --config test/jest-e2e.json",
     "test:cov": "jest --config test/jest-coverage.json --coverage",
+    "docs:diagrams": "for f in docs/diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i $f -o docs/images/$(basename $f .mmd).png -s 2 -b white; done",
     "replay": "npm run build && node dist/replay/replay.js"
   },
   "dependencies": {

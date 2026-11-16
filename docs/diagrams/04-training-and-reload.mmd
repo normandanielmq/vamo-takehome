@@ -1,0 +1,23 @@
+flowchart TD
+  files[(routes.csv, offers.csv, drivers.csv)] --> poll[Poll size and mtime on a timer]
+  poll --> changed{Changed?}
+  changed -->|no| poll
+  changed -->|yes| load[Parse by header name, validate, check integrity]
+  load --> valid{Valid?}
+  valid -->|no| keep[Log error, keep last good snapshot]
+  keep --> poll
+  valid -->|yes| hash{Content hash differs?}
+  hash -->|no| poll
+  hash -->|yes| swap[Atomic swap, publish on snapshots stream]
+  swap --> enqueue[Registry keeps only the latest pending snapshot]
+  enqueue --> train[Train off the request path]
+  train --> ref[Reference price per market]
+  train --> acc[Acceptance model: block-coordinate Newton]
+  train --> cs[Cold start from rating and volume]
+  train --> prof[Operational profile inferred from history]
+  ref --> done{Training succeeded?}
+  acc --> done
+  cs --> done
+  prof --> done
+  done -->|yes| replace[Replace models in one step, new modelVersion]
+  done -->|no| old[Keep previous models, expose lastReloadError]

@@ -1,0 +1,15 @@
+flowchart TD
+  start([Route and candidate drivers]) --> ref[Reference price from per-market regression on miles and stops]
+  ref --> rank[Rank drivers by P of acceptance at the reference price, wave 1]
+  rank --> waves[Fill waves in rank order, driversPerWave each]
+  waves --> small{List runs out before maxWaves?}
+  small -->|yes, re-offers allowed| cycle[Cycle back to the top, never twice in one wave]
+  small -->|no| grid
+  cycle --> grid[For each start multiplier in the grid]
+  grid --> prices[Wave prices: round of start times one plus step to the power wave minus one]
+  prices --> prob[P of acceptance per driver at that wave price]
+  prob --> outcome[Fill probability per wave and expected cost]
+  outcome --> more{More multipliers?}
+  more -->|yes| grid
+  more -->|no| pick[Pick the lowest expected cost, ties to the lower start]
+  pick --> plan([Offer plan with expected outcome and assumptions])

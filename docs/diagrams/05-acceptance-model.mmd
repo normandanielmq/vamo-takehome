@@ -1,0 +1,12 @@
+flowchart LR
+  alpha[alpha market intercept] --> sum((sum))
+  delta[delta driver effect, ridge shrunk to the market mean] --> sum
+  beta[beta times ln of price over reference] --> sum
+  gamma[gamma wave term, wave 2 and up] --> sum
+  sum --> logit[logit of P accept]
+  logit --> p[P accept]
+  unknown[Unknown driver] --> attrs{Rating and volume sent?}
+  attrs -->|yes| csm[delta predicted by cold start regression]
+  attrs -->|no| zero[delta equals 0, the market average]
+  csm --> delta
+  zero --> delta

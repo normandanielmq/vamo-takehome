@@ -1,0 +1,20 @@
+flowchart TD
+  snap[One pinned history snapshot] --> win[Derive windows from the data date range]
+  win --> split[Split into train routes and test routes]
+  split --> trainModels[Train the policy models on train only]
+  split --> env[Fit the simulator environment on test offers only]
+  trainModels --> sim
+  env --> sim[OfferSimulator]
+  sim --> draws[Per draw: routes in time order, common random numbers, drivers busy in the same market and slot]
+  draws --> base[Baseline policy: random drivers, logged start, raise per wave]
+  draws --> model[Model policy]
+  base --> sums[Per-route sums]
+  model --> sums
+  logged[Logged outcomes] --> metrics
+  sums --> metrics[Cost per posted route, fill, wave-1 fill, minutes, paid]
+  metrics --> boot[Cluster bootstrap over market-days]
+  trainModels --> off[Offline AUC, log-loss, calibration tables]
+  env --> gates
+  boot --> gates[PASS or FAIL gates]
+  off --> gates
+  gates --> report[Console table and reports/replay-latest.json]

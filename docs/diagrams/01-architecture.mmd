@@ -1,0 +1,45 @@
+flowchart TB
+  subgraph transport [Transport layer]
+    controller[OfferPlanningController]
+    dto[DTO validation]
+    filter[Exception filter 422]
+  end
+  subgraph application [Application layer]
+    service[OfferPlanningService]
+    registry[OfferModelRegistry]
+    trainer[OfferModelTrainer]
+  end
+  subgraph domain [Pure domain]
+    policy[ModelOfferPolicy]
+    ranker[DriverRanker]
+    builder[WaveBuilder]
+    pricer[StartingPricePolicy]
+    estimator[OutcomeEstimator]
+    reference[ReferencePriceModel]
+    acceptance[AcceptanceModel]
+    cold[ColdStartModel]
+    profile[OperationalProfile]
+  end
+  subgraph data [Data access]
+    store[HistorySnapshotStore]
+    repos[Repositories]
+    csv[CSV files]
+  end
+  controller --> dto
+  controller --> service
+  filter -.-> controller
+  service --> registry
+  service --> repos
+  service --> policy
+  registry --> trainer
+  registry --> store
+  trainer --> reference
+  trainer --> acceptance
+  trainer --> cold
+  trainer --> profile
+  policy --> ranker
+  policy --> builder
+  policy --> pricer
+  pricer --> estimator
+  repos --> store
+  store --> csv

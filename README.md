@@ -131,6 +131,10 @@ On the provided data (headline window) the logged baseline costs 130.77 per post
 
 This is a take-home exercise, not an open contribution project. Feedback and questions go to the reviewer who assigned it (Scott). If you fork it for your own experiments, keep changes small and document how to run them in this README.
 
+## Design
+
+[`docs/DESIGN.md`](docs/DESIGN.md) explains the architecture and the logic, with diagrams (images, sources in `docs/diagrams/`). Regenerate them with `npm run docs:diagrams`.
+
 ## Docker
 
 ```bash

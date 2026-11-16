@@ -1,0 +1,22 @@
+sequenceDiagram
+  actor Client
+  participant C as Controller
+  participant S as OfferPlanningService
+  participant R as OfferModelRegistry
+  participant D as DriverRepository
+  participant P as ModelOfferPolicy
+  Client->>C: POST /offer-plans
+  C->>C: Validate body (400 on failure)
+  C->>S: createPlan(route, drivers)
+  S->>R: current() read once
+  R-->>S: models, policy, modelVersion
+  S->>S: Market supported? (422 if not)
+  S->>S: Drop duplicate driver ids
+  S->>D: findByIds(driver ids)
+  D-->>S: known drivers
+  S->>S: Drop market mismatches
+  S->>S: Any candidates left? (422 if not)
+  S->>P: plan(route, candidates)
+  P-->>S: OfferPlan
+  S-->>C: plan, excludedDrivers, modelVersion
+  C-->>Client: 200 JSON
