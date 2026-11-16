@@ -4,6 +4,17 @@ A small TypeScript/Node service that decides which drivers to offer a new route 
 
 Every posted route needs a driver. Offers go out in waves: start too low and the route sits while the price climbs; start too high and you overpay. This project uses past route, offer, and driver data to recommend a ranked offer list and a starting price, then replays that approach on held-out routes against the baseline of starting low and raising about 8% each wave.
 
+## Documentation index
+
+| Document | Purpose |
+| --- | --- |
+| [`docs/WRITEUP.md`](docs/WRITEUP.md) | The one-page write-up: approach, trade-offs (price vs. speed vs. on-time), replay results, production metrics, real improvement vs. noise, and next steps. |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | How the system is designed and why: architecture, request flow, policy and acceptance model, data reload, and how the replay evaluates it, with diagrams. |
+| [`docs/API-EXAMPLES.md`](docs/API-EXAMPLES.md) | Ready-to-use request bodies for `POST /offer-plans`: successful, 422 and 400 cases. Use them with Swagger UI at `/docs` or `curl`. |
+| [`docs/implementation-plan.md`](docs/implementation-plan.md) | The implementation plan written before the build: ticket assessment, data findings, steps, validation gates and risks. |
+| [`docs/diagrams/`](docs/diagrams/) | Mermaid sources for the diagrams in `DESIGN.md`. |
+| [`docs/images/`](docs/images/) | Rendered PNGs of those diagrams (regenerate with `npm run docs:diagrams`). |
+
 ## Technologies
 
 - **Language:** TypeScript
