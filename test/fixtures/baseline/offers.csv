@@ -1,0 +1,6 @@
+route_id,wave,offer_price,driver_id,response
+R1,1,100,D1,declined
+R1,1,100,D2,no_response
+R1,2,108,D1,accepted
+R2,1,120,D1,declined
+R3,1,80,D3,accepted

@@ -1,0 +1,4 @@
+Total_Miles,ROUTE_ID,extra_col,market,scheduled_start,stop_count,wave1_price,accepted,accepted_driver_id,final_wave,final_price,minutes_to_accept,completed_on_time
+40.5,R1,x,AAA,2026-08-16T07:00:00+00:00,10,100,true,D1,2,108,50,true
+50,R2,y,AAA,2026-08-17T07:00:00Z,12,120,false,,,,,
+30,R3,z,SEA,2026-08-18T09:00:00,8,80,true,D3,1,80,12,false

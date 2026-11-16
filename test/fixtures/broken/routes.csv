@@ -1,0 +1,3 @@
+route_id,market,scheduled_start,stop_count,total_miles,wave1_price,final_wave,final_price,accepted,accepted_driver_id,minutes_to_accept,completed_on_time
+R1,AAA,2026-08-16T07:00:00,10,abc,100,2,108,True,D1,50,True
+R1,AAA,2026-08-17T07:00:00,12,50,120,,,False,,,
