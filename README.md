@@ -128,3 +128,12 @@ On the provided data (headline window) the logged baseline costs 130.77 per post
 ## Contributing
 
 This is a take-home exercise, not an open contribution project. Feedback and questions go to the reviewer who assigned it (Scott). If you fork it for your own experiments, keep changes small and document how to run them in this README.
+
+## Docker
+
+```bash
+docker compose up --build                 # API on http://localhost:3000, CSVs mounted from ./vamo-takehome-data
+docker compose --profile replay run --rm replay   # replay; writes ./reports/replay-latest.json
+```
+
+CI (`.github/workflows/ci.yml`) runs typecheck, build, tests with coverage, and the snapshot check on every push and pull request.

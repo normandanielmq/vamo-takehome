@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATA_DIR: /data
+      DATA_RELOAD_INTERVAL_MS: 5000
+    volumes:
+      # Edit the CSVs on the host; the service reloads them without a restart.
+      - ./vamo-takehome-data:/data:ro
+
+  replay:
+    build: .
+    profiles: ["replay"]
+    command: ["node", "dist/replay/replay.js", "--window", "both"]
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./vamo-takehome-data:/data:ro
+      - ./reports:/app/reports
