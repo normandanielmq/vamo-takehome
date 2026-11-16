@@ -15,6 +15,7 @@
     "test": "jest --config jest.config.js",
     "test:snapshot": "jest --config test/jest-snapshot.json",
     "test:e2e": "jest --config test/jest-e2e.json",
+    "test:cov": "jest --config test/jest-coverage.json --coverage",
     "replay": "npm run build && node dist/replay/replay.js"
   },
   "dependencies": {

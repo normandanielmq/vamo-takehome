@@ -47,6 +47,7 @@ npm install
 npm run start          # http://localhost:3000
 npm test               # unit tests (fixtures and synthetic data only)
 npm run test:e2e       # API tests
+npm run test:cov       # unit + API tests with merged coverage
 npm run test:snapshot  # opt-in: pins the provided CSVs' counts and logged metrics
 ```
 

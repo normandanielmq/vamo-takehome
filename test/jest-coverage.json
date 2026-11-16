@@ -1,0 +1,11 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": "(src/.*\\.spec\\.ts|test/.*\\.e2e-spec\\.ts)$",
+  "transform": { "^.+\\.ts$": "ts-jest" },
+  "testEnvironment": "node",
+  "testTimeout": 30000,
+  "collectCoverageFrom": ["src/**/*.ts", "!src/main.ts", "!src/replay/replay.ts"],
+  "coverageDirectory": "coverage",
+  "coverageReporters": ["text-summary", "text"]
+}
