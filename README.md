@@ -51,6 +51,8 @@ npm run test:cov       # unit + API tests with merged coverage
 npm run test:snapshot  # opt-in: pins the provided CSVs' counts and logged metrics
 ```
 
+> **Try it in the browser:** with the service running, open **Swagger UI at [http://localhost:3000/docs](http://localhost:3000/docs)** and use "Try it out" on `POST /offer-plans`. Paste any ready-made request body from [`docs/API-EXAMPLES.md`](docs/API-EXAMPLES.md) (successful, 422 and 400 cases, with real driver IDs from the provided data).
+
 **Endpoint:** `POST /offer-plans`. Given a new route and the drivers available in that market, it returns which drivers to offer to, in what order (waves), and at what starting price.
 
 ```bash
@@ -140,4 +142,4 @@ CI (`.github/workflows/ci.yml`) runs typecheck, build, tests with coverage, and 
 
 ## API documentation
 
-With the service running, Swagger UI is at `http://localhost:3000/docs` and the raw OpenAPI JSON at `http://localhost:3000/docs/json`. More request bodies are in [`docs/API-EXAMPLES.md`](docs/API-EXAMPLES.md).
+With the service running (`npm run start` or Docker), Swagger UI is at `http://localhost:3000/docs` and the raw OpenAPI JSON at `http://localhost:3000/docs/json`. To test the endpoint, use "Try it out" and paste a body from [`docs/API-EXAMPLES.md`](docs/API-EXAMPLES.md), which covers successful requests and the 422 and 400 error cases.
