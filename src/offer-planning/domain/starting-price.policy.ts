@@ -66,9 +66,14 @@ export class StartingPricePolicy {
       const start = Math.max(1, Math.round(referencePrice * multiplier));
       const prices = wavePrices(start, waves.length, this.profile.priceStep);
       const probabilities = waves.map((slots, k) =>
-        slots.map((slot) => this.probability(slot.ranked.candidate, market, referencePrice, prices[k], k + 1)),
+        slots.map((slot) =>
+          this.probability(slot.ranked.candidate, market, referencePrice, prices[k], k + 1),
+        ),
       );
-      const estimates: WaveEstimate[] = waves.map((_, k) => ({ price: prices[k], probabilities: probabilities[k] }));
+      const estimates: WaveEstimate[] = waves.map((_, k) => ({
+        price: prices[k],
+        probabilities: probabilities[k],
+      }));
       const expected = this.estimator.estimate(estimates, {
         referencePrice,
         unfilledPenaltyMultiplier: this.config.unfilledPenaltyMultiplier,
@@ -77,7 +82,13 @@ export class StartingPricePolicy {
       });
       // strict < keeps the lower start on ties
       if (!best || expected.expectedCost < best.expected.expectedCost - 1e-12) {
-        best = { startMultiplier: multiplier, startingPrice: start, prices, waveProbabilities: probabilities, expected };
+        best = {
+          startMultiplier: multiplier,
+          startingPrice: start,
+          prices,
+          waveProbabilities: probabilities,
+          expected,
+        };
       }
     }
     return best as PricedPlan;
@@ -93,7 +104,13 @@ export class StartingPricePolicy {
    * @param wave - Wave number (1-based).
    * @returns Probability of acceptance.
    */
-  probability(candidate: Candidate, market: string, referencePrice: number, price: number, wave: number): number {
+  probability(
+    candidate: Candidate,
+    market: string,
+    referencePrice: number,
+    price: number,
+    wave: number,
+  ): number {
     return this.model.probability({
       driverId: candidate.driverId,
       market,

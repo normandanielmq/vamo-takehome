@@ -13,13 +13,16 @@ async function createApp(dir: string): Promise<INestApplication> {
   process.env.DATA_RELOAD_INTERVAL_MS = '0';
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  );
   await app.init();
   return app;
 }
 
 const route = (market: string) => ({ routeId: 'X1', market, stopCount: 12, totalMiles: 40 });
-const drivers = (market: string, n: number) => Array.from({ length: n }, (_, i) => ({ driverId: `${market}-D${i}` }));
+const drivers = (market: string, n: number) =>
+  Array.from({ length: n }, (_, i) => ({ driverId: `${market}-D${i}` }));
 
 describe('POST /offer-plans', () => {
   let app: INestApplication;
@@ -31,10 +34,15 @@ describe('POST /offer-plans', () => {
   });
   afterAll(async () => app.close());
 
-  const post = (body: unknown) => request(app.getHttpServer()).post('/offer-plans').send(body as object);
+  const post = (body: unknown) =>
+    request(app.getHttpServer())
+      .post('/offer-plans')
+      .send(body as object);
 
   it('returns a valid plan within profile limits', async () => {
-    const res = await post({ route: route('AAA'), availableDrivers: drivers('AAA', 8) }).expect(200);
+    const res = await post({ route: route('AAA'), availableDrivers: drivers('AAA', 8) }).expect(
+      200,
+    );
     const { operationalProfile: prof, waves } = res.body;
     expect(waves.length).toBeGreaterThan(0);
     expect(waves.length).toBeLessThanOrEqual(prof.maxWaves);
@@ -53,11 +61,23 @@ describe('POST /offer-plans', () => {
   });
 
   it.each([
-    ['market missing', { route: { stopCount: 3, totalMiles: 10 }, availableDrivers: [{ driverId: 'a' }] }],
-    ['empty market', { route: { ...route(''), market: '' }, availableDrivers: [{ driverId: 'a' }] }],
+    [
+      'market missing',
+      { route: { stopCount: 3, totalMiles: 10 }, availableDrivers: [{ driverId: 'a' }] },
+    ],
+    [
+      'empty market',
+      { route: { ...route(''), market: '' }, availableDrivers: [{ driverId: 'a' }] },
+    ],
     ['no drivers', { route: route('AAA'), availableDrivers: [] }],
-    ['stopCount 0', { route: { ...route('AAA'), stopCount: 0 }, availableDrivers: [{ driverId: 'a' }] }],
-    ['miles not a number', { route: { ...route('AAA'), totalMiles: 'abc' }, availableDrivers: [{ driverId: 'a' }] }],
+    [
+      'stopCount 0',
+      { route: { ...route('AAA'), stopCount: 0 }, availableDrivers: [{ driverId: 'a' }] },
+    ],
+    [
+      'miles not a number',
+      { route: { ...route('AAA'), totalMiles: 'abc' }, availableDrivers: [{ driverId: 'a' }] },
+    ],
     ['extra driver field', { route: route('AAA'), availableDrivers: [{ driverId: 'a', foo: 1 }] }],
   ])('400: %s', async (_name, body) => {
     await post(body).expect(400);
@@ -66,7 +86,12 @@ describe('POST /offer-plans', () => {
   it('excludes market mismatches and duplicates', async () => {
     const res = await post({
       route: route('AAA'),
-      availableDrivers: [{ driverId: 'AAA-D1' }, { driverId: 'AAA-D1' }, { driverId: 'BBB-D2' }, { driverId: 'AAA-D3' }],
+      availableDrivers: [
+        { driverId: 'AAA-D1' },
+        { driverId: 'AAA-D1' },
+        { driverId: 'BBB-D2' },
+        { driverId: 'AAA-D3' },
+      ],
     }).expect(200);
     expect(res.body.excludedDrivers).toEqual(
       expect.arrayContaining([
@@ -77,7 +102,10 @@ describe('POST /offer-plans', () => {
   });
 
   it('422 for a market not in the data and for all-excluded drivers', async () => {
-    const unknown = await post({ route: route('NOPE'), availableDrivers: drivers('AAA', 2) }).expect(422);
+    const unknown = await post({
+      route: route('NOPE'),
+      availableDrivers: drivers('AAA', 2),
+    }).expect(422);
     expect(unknown.body.message).toMatch(/not in data/);
     await post({ route: route('AAA'), availableDrivers: [{ driverId: 'BBB-D1' }] }).expect(422);
   });
@@ -85,22 +113,39 @@ describe('POST /offer-plans', () => {
   it('cold-starts unknown drivers', async () => {
     const res = await post({
       route: route('AAA'),
-      availableDrivers: [{ driverId: 'ghost1' }, { driverId: 'ghost2', rating: 4.8, routesCompleted90d: 30 }],
+      availableDrivers: [
+        { driverId: 'ghost1' },
+        { driverId: 'ghost2', rating: 4.8, routesCompleted90d: 30 },
+      ],
     }).expect(200);
-    const all = res.body.waves.flatMap((w: { drivers: { driverId: string; coldStart: string }[] }) => w.drivers);
+    const all = res.body.waves.flatMap(
+      (w: { drivers: { driverId: string; coldStart: string }[] }) => w.drivers,
+    );
     expect(all.find((d: { driverId: string }) => d.driverId === 'ghost1').coldStart).toBe('market');
-    expect(all.find((d: { driverId: string }) => d.driverId === 'ghost2').coldStart).toBe('attributes');
+    expect(all.find((d: { driverId: string }) => d.driverId === 'ghost2').coldStart).toBe(
+      'attributes',
+    );
   });
 
   it('accepts a request without routeId and scheduledStart', async () => {
-    await post({ route: { market: 'AAA', stopCount: 5, totalMiles: 20 }, availableDrivers: drivers('AAA', 3) }).expect(200);
+    await post({
+      route: { market: 'AAA', stopCount: 5, totalMiles: 20 },
+      availableDrivers: drivers('AAA', 3),
+    }).expect(200);
   });
 });
 
 describe('data-driven behavior', () => {
   it('serves a dataset with a new market, 5 waves and a different price step', async () => {
     const dir = writeDatasetCsv(
-      generateDataset({ markets: ['SEA'], waves: 5, driversPerWave: 3, priceStep: 0.05, routesPerMarket: 800, alpha: -3.2 }),
+      generateDataset({
+        markets: ['SEA'],
+        waves: 5,
+        driversPerWave: 3,
+        priceStep: 0.05,
+        routesPerMarket: 800,
+        alpha: -3.2,
+      }),
     );
     const app = await createApp(dir);
     const res = await request(app.getHttpServer())
@@ -118,7 +163,9 @@ describe('data-driven behavior', () => {
     const app = await createApp(dir);
     const server = app.getHttpServer();
     const post = (m: string) =>
-      request(server).post('/offer-plans').send({ route: route(m), availableDrivers: drivers(m, 6) });
+      request(server)
+        .post('/offer-plans')
+        .send({ route: route(m), availableDrivers: drivers(m, 6) });
 
     const first = await post('AAA').expect(200);
     await post('SEA').expect(422);

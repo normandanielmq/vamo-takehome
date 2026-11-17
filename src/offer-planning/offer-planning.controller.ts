@@ -18,7 +18,9 @@ export class OfferPlanningController {
    * @throws {@link NoEligibleDriversError} If every driver is excluded (mapped to 422).
    */
   @Post()
-  @ApiOperation({ summary: 'Rank drivers, group them into waves and pick a starting price for a route' })
+  @ApiOperation({
+    summary: 'Rank drivers, group them into waves and pick a starting price for a route',
+  })
   @ApiResponse({ status: 200, description: 'Offer plan (probabilities are model estimates)' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 422, description: 'Market not in the data, or every driver excluded' })

@@ -5,7 +5,10 @@ import { runReplay } from '../src/replay/replay-runner';
 
 // Opt-in: pins the provided dataset (vamo-takehome-data). Not part of `npm test`.
 describe('provided dataset snapshot', () => {
-  const config = loadAppConfig({ ...process.env, DATA_DIR: process.env.DATA_DIR ?? 'vamo-takehome-data' });
+  const config = loadAppConfig({
+    ...process.env,
+    DATA_DIR: process.env.DATA_DIR ?? 'vamo-takehome-data',
+  });
   const snapshot = loadHistorySnapshot(config, 'fail');
 
   it('has the expected counts', () => {
@@ -16,13 +19,23 @@ describe('provided dataset snapshot', () => {
   });
 
   it('prices a 50-mile 10-stop NYC route near 83.8 (+-3%)', () => {
-    const train = snapshot.routes.filter((r) => r.scheduledStart < new Date('2026-10-01T00:00:00Z'));
-    const price = ReferencePriceModel.fit(train).priceFor({ market: 'NYC', totalMiles: 50, stopCount: 10 });
+    const train = snapshot.routes.filter(
+      (r) => r.scheduledStart < new Date('2026-10-01T00:00:00Z'),
+    );
+    const price = ReferencePriceModel.fit(train).priceFor({
+      market: 'NYC',
+      totalMiles: 50,
+      stopCount: 10,
+    });
     expect(Math.abs(price / 83.8 - 1)).toBeLessThan(0.03);
   });
 
   it('derives the 2026-10-01 cutoff and reproduces the logged holdout metrics', () => {
-    const report = runReplay(snapshot, { draws: 3, bootstrapResamples: 20, windows: ['headline', 'early'] });
+    const report = runReplay(snapshot, {
+      draws: 3,
+      bootstrapResamples: 20,
+      windows: ['headline', 'early'],
+    });
     const [headline, early] = report.windows;
     expect(headline.testFrom).toBe('2026-10-01T00:00:00.000Z');
     expect(headline.loggedBaseline.fillRate).toBeCloseTo(0.876, 3);

@@ -43,7 +43,10 @@ export class DriverRanker {
         });
         return { candidate, probability: p, coldStart };
       })
-      .sort((a, b) => b.probability - a.probability || a.candidate.driverId.localeCompare(b.candidate.driverId))
+      .sort(
+        (a, b) =>
+          b.probability - a.probability || a.candidate.driverId.localeCompare(b.candidate.driverId),
+      )
       .map((r, i) => ({ ...r, rank: i + 1 }));
   }
 }

@@ -1,5 +1,12 @@
 import { mulberry } from './prng';
-import { addSums, emptySums, METRIC_KEYS, MetricSet, metricsFromSums, RouteSums } from './replay-metrics';
+import {
+  addSums,
+  emptySums,
+  METRIC_KEYS,
+  MetricSet,
+  metricsFromSums,
+  RouteSums,
+} from './replay-metrics';
 
 /**
  * A point estimate with a 95% percentile interval.
@@ -49,7 +56,9 @@ export function pairedClusterBootstrap(
   const clusters = [...m.keys()].filter((c) => b.has(c)).sort();
   const rnd = mulberry(seed);
   const point = diff(metricsFromSums([...m.values()]), metricsFromSums([...b.values()]));
-  const draws: Record<string, number[]> = Object.fromEntries(METRIC_KEYS.map((k) => [k, [] as number[]]));
+  const draws: Record<string, number[]> = Object.fromEntries(
+    METRIC_KEYS.map((k) => [k, [] as number[]]),
+  );
   for (let r = 0; r < resamples; r++) {
     const ms: RouteSums[] = [];
     const bs: RouteSums[] = [];

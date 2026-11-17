@@ -82,7 +82,12 @@ export class OfferModelRegistry implements OnModuleInit, OnModuleDestroy {
     const trainedAt = new Date().toISOString();
     return {
       models,
-      policy: new ModelOfferPolicy(models.reference, models.acceptance, this.config, models.profile),
+      policy: new ModelOfferPolicy(
+        models.reference,
+        models.acceptance,
+        this.config,
+        models.profile,
+      ),
       modelVersion: `${snapshot.fingerprint}-${trainedAt}`,
     };
   }
@@ -105,7 +110,9 @@ export class OfferModelRegistry implements OnModuleInit, OnModuleDestroy {
             this.logger.log(`Retrained models, version ${this.state.modelVersion}`);
           } catch (error) {
             this.lastReloadError = (error as Error).message;
-            this.logger.error(`Retraining failed, keeping previous models: ${this.lastReloadError}`);
+            this.logger.error(
+              `Retraining failed, keeping previous models: ${this.lastReloadError}`,
+            );
           }
         }
         this.running = null;

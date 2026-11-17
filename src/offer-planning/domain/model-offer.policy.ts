@@ -47,7 +47,12 @@ export class ModelOfferPolicy implements OfferPolicy {
     const referencePrice = this.reference.priceFor(input.route);
     const market = input.route.market;
     const ranked = this.ranker.rank(input.candidates, market, referencePrice);
-    const slots = this.builder.build(ranked, this.profile.maxWaves, this.profile.driversPerWave, this.config.allowReoffer);
+    const slots = this.builder.build(
+      ranked,
+      this.profile.maxWaves,
+      this.profile.driversPerWave,
+      this.config.allowReoffer,
+    );
     const priced = this.pricer.choose(market, referencePrice, slots);
     const waves: OfferWave[] = slots.map((wave, k) => ({
       wave: k + 1,
@@ -71,7 +76,9 @@ export class ModelOfferPolicy implements OfferPolicy {
         unfilledPenaltyMultiplier: this.config.unfilledPenaltyMultiplier,
         delayCostPerWaveMultiplier: this.config.delayCostPerWaveMultiplier,
         priceStep: this.profile.priceStep,
-        extrapolatedWaves: waves.filter((w) => this.acceptance.isExtrapolated(w.wave)).map((w) => w.wave),
+        extrapolatedWaves: waves
+          .filter((w) => this.acceptance.isExtrapolated(w.wave))
+          .map((w) => w.wave),
       },
     };
   }

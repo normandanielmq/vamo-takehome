@@ -1,7 +1,18 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize, ArrayMinSize, IsInt, IsISO8601, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString,
-  Max, MaxLength, Min, ValidateNested,
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsInt,
+  IsISO8601,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 
 /** Route details supplied in a plan request. */

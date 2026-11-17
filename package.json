@@ -18,7 +18,11 @@
     "test:e2e": "jest --config test/jest-e2e.json",
     "test:cov": "jest --config test/jest-coverage.json --coverage",
     "docs:diagrams": "for f in docs/diagrams/*.mmd; do npx -y @mermaid-js/mermaid-cli -i $f -o docs/images/$(basename $f .mmd).png -s 2 -b white; done",
-    "replay": "npm run build && node dist/replay/replay.js"
+    "replay": "npm run build && node dist/replay/replay.js",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.10",
@@ -32,6 +36,7 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.2.10",
@@ -39,9 +44,14 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
     "@types/supertest": "^7.2.1",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
     "jest": "^30.5.2",
+    "prettier": "^3.10.1",
     "supertest": "^7.3.2",
     "ts-jest": "^29.4.15",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0"
   }
 }

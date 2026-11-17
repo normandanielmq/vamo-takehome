@@ -7,7 +7,8 @@ import { HistorySnapshotStore } from './history-snapshot.store';
 function setup() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'store-'));
   const src = path.join(__dirname, '../../test/fixtures/baseline');
-  for (const f of ['routes.csv', 'offers.csv', 'drivers.csv']) fs.copyFileSync(path.join(src, f), path.join(dir, f));
+  for (const f of ['routes.csv', 'offers.csv', 'drivers.csv'])
+    fs.copyFileSync(path.join(src, f), path.join(dir, f));
   const config: AppConfig = {
     port: 0,
     dataDir: dir,
@@ -55,7 +56,10 @@ describe('HistorySnapshotStore', () => {
     expect(store.check()).toBe(false);
     expect(store.current()).toBe(good);
     expect(store.lastReloadError).toMatch(/missing required column/);
-    fs.writeFileSync(config.routesFile, original + 'R4,BBB,2026-08-19T09:00:00,Wed,5,20,60,,,False,,,\n');
+    fs.writeFileSync(
+      config.routesFile,
+      original + 'R4,BBB,2026-08-19T09:00:00,Wed,5,20,60,,,False,,,\n',
+    );
     expect(store.check()).toBe(true);
     expect(store.current().routes).toHaveLength(4);
     expect(store.lastReloadError).toBeNull();

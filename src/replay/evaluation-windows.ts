@@ -55,13 +55,27 @@ const startOfUtcDay = (d: Date) => new Date(Math.floor(d.getTime() / DAY) * DAY)
  * @param options - Window options.
  * @returns Window definitions keyed by name.
  */
-export function deriveWindows(range: { min: Date; max: Date }, options: WindowOptions): Record<WindowName, EvaluationWindow> {
+export function deriveWindows(
+  range: { min: Date; max: Date },
+  options: WindowOptions,
+): Record<WindowName, EvaluationWindow> {
   const headlineCutoff =
-    options.cutoff ?? new Date(startOfUtcDay(range.max).getTime() - (options.holdoutDays - 1) * DAY);
+    options.cutoff ??
+    new Date(startOfUtcDay(range.max).getTime() - (options.holdoutDays - 1) * DAY);
   const earlyCutoff = new Date(headlineCutoff.getTime() - options.earlyDays * DAY);
   return {
-    headline: { name: 'headline', trainBefore: headlineCutoff, testFrom: headlineCutoff, testBefore: null },
-    early: { name: 'early', trainBefore: earlyCutoff, testFrom: earlyCutoff, testBefore: headlineCutoff },
+    headline: {
+      name: 'headline',
+      trainBefore: headlineCutoff,
+      testFrom: headlineCutoff,
+      testBefore: null,
+    },
+    early: {
+      name: 'early',
+      trainBefore: earlyCutoff,
+      testFrom: earlyCutoff,
+      testBefore: headlineCutoff,
+    },
   };
 }
 
@@ -93,7 +107,9 @@ export function splitWindow(
 ): WindowSplit {
   const trainRoutes = routes.filter((r) => r.scheduledStart < window.trainBefore);
   const testRoutes = routes.filter(
-    (r) => r.scheduledStart >= window.testFrom && (window.testBefore === null || r.scheduledStart < window.testBefore),
+    (r) =>
+      r.scheduledStart >= window.testFrom &&
+      (window.testBefore === null || r.scheduledStart < window.testBefore),
   );
   if (trainRoutes.length < options.minTrainRoutes || testRoutes.length < options.minTestRoutes) {
     throw new InsufficientDataError(

@@ -21,7 +21,8 @@ export interface OfferPlanningConfig {
  */
 const grid = (from: number, to: number, step: number): number[] => {
   const out: number[] = [];
-  for (let i = 0; from + i * step <= to + 1e-9; i++) out.push(Math.round((from + i * step) * 1e6) / 1e6);
+  for (let i = 0; from + i * step <= to + 1e-9; i++)
+    out.push(Math.round((from + i * step) * 1e6) / 1e6);
   return out;
 };
 

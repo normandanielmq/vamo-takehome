@@ -21,7 +21,12 @@ export class WaveBuilder {
    * @param allowReoffer - Whether drivers may be offered again in later waves.
    * @returns Slots per wave (empty if there are no drivers).
    */
-  build(ranked: RankedCandidate[], maxWaves: number, driversPerWave: number, allowReoffer: boolean): WaveSlot[][] {
+  build(
+    ranked: RankedCandidate[],
+    maxWaves: number,
+    driversPerWave: number,
+    allowReoffer: boolean,
+  ): WaveSlot[][] {
     if (ranked.length === 0) return [];
     const perWave = Math.min(driversPerWave, ranked.length);
     const waves: WaveSlot[][] = [];

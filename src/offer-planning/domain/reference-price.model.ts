@@ -44,7 +44,10 @@ export class ReferencePriceModel {
     const unsupported = new Map<string, string>();
     for (const [market, list] of byMarket) {
       if (list.length < minRoutes) {
-        unsupported.set(market, `only ${list.length} routes, need at least ${minRoutes} for a reference price`);
+        unsupported.set(
+          market,
+          `only ${list.length} routes, need at least ${minRoutes} for a reference price`,
+        );
         continue;
       }
       try {
@@ -54,7 +57,10 @@ export class ReferencePriceModel {
         );
         coefficients.set(market, beta);
       } catch {
-        unsupported.set(market, 'reference price regression is singular (miles/stops do not vary enough)');
+        unsupported.set(
+          market,
+          'reference price regression is singular (miles/stops do not vary enough)',
+        );
       }
     }
     return new ReferencePriceModel(coefficients, unsupported);

@@ -1,7 +1,12 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { Driver, HistoricalOffer, HistoricalRoute, asMarket } from '../../src/history/history.types';
+import {
+  Driver,
+  HistoricalOffer,
+  HistoricalRoute,
+  asMarket,
+} from '../../src/history/history.types';
 
 export interface SyntheticOptions {
   markets: string[];
@@ -162,24 +167,43 @@ export function generateDataset(overrides: Partial<SyntheticOptions> = {}): Synt
       });
     }
   }
-  return { routes, offers, drivers, truth: { alpha: o.alpha, beta: o.beta, waveGamma: o.waveGamma, delta } };
+  return {
+    routes,
+    offers,
+    drivers,
+    truth: { alpha: o.alpha, beta: o.beta, waveGamma: o.waveGamma, delta },
+  };
 }
 
 const iso = (d: Date) => d.toISOString().replace('.000Z', '');
 
-export function writeDatasetCsv(ds: Pick<SyntheticDataset, 'routes' | 'offers' | 'drivers'>, dir?: string): string {
+export function writeDatasetCsv(
+  ds: Pick<SyntheticDataset, 'routes' | 'offers' | 'drivers'>,
+  dir?: string,
+): string {
   const target = dir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'synth-'));
   fs.mkdirSync(target, { recursive: true });
   const b = (v: boolean | null) => (v === null ? '' : v ? 'True' : 'False');
-  const nv = (v: unknown) => (v === null || v === undefined ? '' : String(v));
+  const nv = (v: string | number | null | undefined) =>
+    v === null || v === undefined ? '' : String(v);
   fs.writeFileSync(
     path.join(target, 'routes.csv'),
     [
       'route_id,market,scheduled_start,weekday,stop_count,total_miles,wave1_price,final_wave,final_price,accepted,accepted_driver_id,minutes_to_accept,completed_on_time',
       ...ds.routes.map((r) =>
         [
-          r.routeId, r.market, iso(r.scheduledStart), 'Mon', r.stopCount, r.totalMiles, r.wave1Price,
-          nv(r.finalWave), nv(r.finalPrice), b(r.accepted), nv(r.acceptedDriverId), nv(r.minutesToAccept),
+          r.routeId,
+          r.market,
+          iso(r.scheduledStart),
+          'Mon',
+          r.stopCount,
+          r.totalMiles,
+          r.wave1Price,
+          nv(r.finalWave),
+          nv(r.finalPrice),
+          b(r.accepted),
+          nv(r.acceptedDriverId),
+          nv(r.minutesToAccept),
           b(r.completedOnTime),
         ].join(','),
       ),
@@ -187,11 +211,19 @@ export function writeDatasetCsv(ds: Pick<SyntheticDataset, 'routes' | 'offers' |
   );
   fs.writeFileSync(
     path.join(target, 'offers.csv'),
-    ['route_id,wave,offer_price,driver_id,response', ...ds.offers.map((x) => [x.routeId, x.wave, x.offerPrice, x.driverId, x.response].join(','))].join('\n') + '\n',
+    [
+      'route_id,wave,offer_price,driver_id,response',
+      ...ds.offers.map((x) => [x.routeId, x.wave, x.offerPrice, x.driverId, x.response].join(',')),
+    ].join('\n') + '\n',
   );
   fs.writeFileSync(
     path.join(target, 'drivers.csv'),
-    ['driver_id,market,rating,routes_completed_90d', ...ds.drivers.map((d) => [d.driverId, d.market, nv(d.rating), nv(d.routesCompleted90d)].join(','))].join('\n') + '\n',
+    [
+      'driver_id,market,rating,routes_completed_90d',
+      ...ds.drivers.map((d) =>
+        [d.driverId, d.market, nv(d.rating), nv(d.routesCompleted90d)].join(','),
+      ),
+    ].join('\n') + '\n',
   );
   return target;
 }

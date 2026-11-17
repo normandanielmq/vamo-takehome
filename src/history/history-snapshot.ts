@@ -3,7 +3,13 @@ import { readFileSync } from 'node:fs';
 import { InvalidRowPolicy } from '../config/app.config';
 import { CsvDataError, CsvFileReader } from './csv-file.reader';
 import { driversSchema, offersSchema, routesSchema } from './csv-schema';
-import { DataQualityReport, Driver, HistoricalOffer, HistoricalRoute, Market } from './history.types';
+import {
+  DataQualityReport,
+  Driver,
+  HistoricalOffer,
+  HistoricalRoute,
+  Market,
+} from './history.types';
 
 /** Filesystem locations of the three CSV files that make up the history. */
 export interface HistoryPaths {
@@ -32,7 +38,9 @@ export interface HistorySnapshot {
  * @throws If any file cannot be read.
  */
 export function readFingerprint(paths: HistoryPaths): { buffers: Buffer[]; fingerprint: string } {
-  const buffers = [paths.routesFile, paths.offersFile, paths.driversFile].map((f) => readFileSync(f));
+  const buffers = [paths.routesFile, paths.offersFile, paths.driversFile].map((f) =>
+    readFileSync(f),
+  );
   const hash = createHash('sha256');
   buffers.forEach((b) => hash.update(b));
   return { buffers, fingerprint: hash.digest('hex').slice(0, 12) };
@@ -61,16 +69,28 @@ function assertUnique(keys: string[], what: string): void {
  * @returns The snapshot, including its fingerprint and data quality report.
  * @throws {@link CsvDataError} On unparseable files, missing columns, duplicate ids, or invalid rows under the `fail` policy.
  */
-export function loadHistorySnapshot(paths: HistoryPaths, policy: InvalidRowPolicy): HistorySnapshot {
+export function loadHistorySnapshot(
+  paths: HistoryPaths,
+  policy: InvalidRowPolicy,
+): HistorySnapshot {
   const { buffers, fingerprint } = readFingerprint(paths);
   const [routesBuf, offersBuf, driversBuf] = buffers.map((b) => b.toString('utf8'));
   const routesRead = CsvFileReader.parse(routesBuf, routesSchema, policy);
   const offersRead = CsvFileReader.parse(offersBuf, offersSchema, policy);
   const driversRead = CsvFileReader.parse(driversBuf, driversSchema, policy);
 
-  assertUnique(routesRead.rows.map((r) => r.routeId), 'route_id');
-  assertUnique(driversRead.rows.map((d) => d.driverId), 'driver_id');
-  assertUnique(offersRead.rows.map((o) => `${o.routeId}/${o.wave}/${o.driverId}`), 'offer (route/wave/driver)');
+  assertUnique(
+    routesRead.rows.map((r) => r.routeId),
+    'route_id',
+  );
+  assertUnique(
+    driversRead.rows.map((d) => d.driverId),
+    'driver_id',
+  );
+  assertUnique(
+    offersRead.rows.map((o) => `${o.routeId}/${o.wave}/${o.driverId}`),
+    'offer (route/wave/driver)',
+  );
 
   const routeById = new Map(routesRead.rows.map((r) => [r.routeId, r]));
   const driverById = new Map(driversRead.rows.map((d) => [d.driverId, d]));
@@ -99,13 +119,14 @@ export function loadHistorySnapshot(paths: HistoryPaths, policy: InvalidRowPolic
   ).length;
 
   const problems = [...routesRead.problems, ...offersRead.problems, ...driversRead.problems];
-  if (offersOnUnknownRoutes > 0) problems.push(`${offersOnUnknownRoutes} offer(s) on unknown routes dropped`);
+  if (offersOnUnknownRoutes > 0)
+    problems.push(`${offersOnUnknownRoutes} offer(s) on unknown routes dropped`);
 
   return {
     routes: routesRead.rows,
     offers,
     drivers: driversRead.rows,
-    markets: [...new Set(routesRead.rows.map((r) => r.market))].sort() as Market[],
+    markets: [...new Set(routesRead.rows.map((r) => r.market))].sort(),
     fingerprint,
     loadedAt: new Date(),
     quality: {

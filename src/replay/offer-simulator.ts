@@ -35,7 +35,8 @@ export const slotKey = (r: HistoricalRoute): string => `${r.market}|${r.schedule
  * @param r - The route.
  * @returns The cluster key (market and UTC date).
  */
-export const clusterKey = (r: HistoricalRoute): string => `${r.market}|${r.scheduledStart.toISOString().slice(0, 10)}`;
+export const clusterKey = (r: HistoricalRoute): string =>
+  `${r.market}|${r.scheduledStart.toISOString().slice(0, 10)}`;
 
 /**
  * The simulated environment. Acceptance is an AcceptanceModel fitted on the test window only (never the
@@ -63,7 +64,7 @@ export class OfferSimulator {
     private readonly onTimeRateByMarket: Map<string, number>,
   ) {}
 
-/**
+  /**
    * Runs one policy over all routes for `draws` draws and returns per-route sums.
    *
    * Routes are processed in start order; a driver who accepts a route in a slot is unavailable for other routes in that slot within the same draw.
@@ -75,10 +76,25 @@ export class OfferSimulator {
    */
   run(routes: HistoricalRoute[], factory: PolicyFactory, draws: number): RouteSums[] {
     const ordered = [...routes].sort(
-      (a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime() || a.routeId.localeCompare(b.routeId),
+      (a, b) =>
+        a.scheduledStart.getTime() - b.scheduledStart.getTime() ||
+        a.routeId.localeCompare(b.routeId),
     );
     const sums = new Map<string, RouteSums>(
-      ordered.map((r) => [r.routeId, { cluster: clusterKey(r), draws: 0, cost: 0, filled: 0, wave1: 0, minutes: 0, paid: 0, paidOverRef: 0, onTime: 0 }]),
+      ordered.map((r) => [
+        r.routeId,
+        {
+          cluster: clusterKey(r),
+          draws: 0,
+          cost: 0,
+          filled: 0,
+          wave1: 0,
+          minutes: 0,
+          paid: 0,
+          paidOverRef: 0,
+          onTime: 0,
+        },
+      ]),
     );
     for (let draw = 0; draw < draws; draw++) {
       const busy = new Map<string, Set<string>>(); // slot -> drivers who accepted a route in it this draw
@@ -87,7 +103,10 @@ export class OfferSimulator {
         const taken = busy.get(slot) ?? new Set<string>();
         const pool: Candidate[] = (this.driversByMarket.get(route.market) ?? [])
           .filter((d) => !taken.has(d.driverId))
-          .map((d) => ({ driverId: d.driverId, attributes: { rating: d.rating, routesCompleted90d: d.routesCompleted90d } }));
+          .map((d) => ({
+            driverId: d.driverId,
+            attributes: { rating: d.rating, routesCompleted90d: d.routesCompleted90d },
+          }));
         const ref = this.reference.priceFor(route);
         const outcome = this.simulateRoute(route, pool, factory(route, draw), draw, ref);
         if (outcome.filled && outcome.driverId) {
@@ -122,10 +141,22 @@ export class OfferSimulator {
    * @param ref - Reference price for the route.
    * @returns The outcome (unfilled if the pool is empty or no one accepts).
    */
-  private simulateRoute(route: HistoricalRoute, pool: Candidate[], policy: OfferPolicy, draw: number, ref: number): RouteOutcome {
+  private simulateRoute(
+    route: HistoricalRoute,
+    pool: Candidate[],
+    policy: OfferPolicy,
+    draw: number,
+    ref: number,
+  ): RouteOutcome {
     if (pool.length === 0) return { filled: false, wave: 0, price: 0, minutes: 0, driverId: null };
     const plan: OfferPlan = policy.plan({
-      route: { routeId: route.routeId, market: route.market, totalMiles: route.totalMiles, stopCount: route.stopCount, scheduledStart: route.scheduledStart },
+      route: {
+        routeId: route.routeId,
+        market: route.market,
+        totalMiles: route.totalMiles,
+        stopCount: route.stopCount,
+        scheduledStart: route.scheduledStart,
+      },
       candidates: pool,
     });
     const offerCount = new Map<string, number>();
@@ -137,7 +168,12 @@ export class OfferSimulator {
         const u = uniformFromKey(`${route.routeId}|${d.driverId}|${draw}|${idx}`, this.seed);
         const attrs = pool.find((c) => c.driverId === d.driverId)?.attributes;
         const p = this.environment.probability({
-          driverId: d.driverId, market: route.market, price: wave.price, referencePrice: ref, wave: wave.wave, attributes: attrs,
+          driverId: d.driverId,
+          market: route.market,
+          price: wave.price,
+          referencePrice: ref,
+          wave: wave.wave,
+          attributes: attrs,
         }).p;
         if (u < p && (winner === null || u < winner.u)) winner = { driverId: d.driverId, u };
       }
@@ -147,7 +183,10 @@ export class OfferSimulator {
           filled: true,
           wave: wave.wave,
           price: wave.price,
-          minutes: (wave.wave - 1) * this.waveIntervalMinutes + 1 + Math.floor(m * this.waveIntervalMinutes),
+          minutes:
+            (wave.wave - 1) * this.waveIntervalMinutes +
+            1 +
+            Math.floor(m * this.waveIntervalMinutes),
           driverId: winner.driverId,
         };
       }

@@ -52,7 +52,10 @@ export class OfferPlanningService {
     const { models, policy, modelVersion } = this.registry.current();
     const market = command.route.market;
     if (!models.supportedMarkets.includes(market)) {
-      throw new UnsupportedMarketError(market, models.unsupportedMarkets.get(market) ?? 'not in data');
+      throw new UnsupportedMarketError(
+        market,
+        models.unsupportedMarkets.get(market) ?? 'not in data',
+      );
     }
 
     const excluded: ExcludedDriver[] = [];
@@ -76,7 +79,8 @@ export class OfferPlanningService {
           : { rating: requested.rating, routesCompleted90d: requested.routesCompleted90d },
       });
     }
-    if (candidates.length === 0) throw new NoEligibleDriversError('All supplied drivers were excluded');
+    if (candidates.length === 0)
+      throw new NoEligibleDriversError('All supplied drivers were excluded');
 
     const plan = policy.plan({ route: command.route, candidates });
     return { plan, excludedDrivers: excluded, modelVersion, operationalProfile: models.profile };

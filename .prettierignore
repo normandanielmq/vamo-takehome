@@ -1,0 +1,6 @@
+dist
+node_modules
+coverage
+reports
+vamo-takehome-data
+package-lock.json

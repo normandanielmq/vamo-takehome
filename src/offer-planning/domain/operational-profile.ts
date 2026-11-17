@@ -19,7 +19,12 @@ export type ProfileOverrides = Partial<Omit<OperationalProfile, 'warnings'>>;
 /**
  * Defaults used when a profile field cannot be inferred from history.
  */
-export const PROFILE_FALLBACK = { maxWaves: 4, driversPerWave: 4, waveIntervalMinutes: 30, priceStep: 0.08 };
+export const PROFILE_FALLBACK = {
+  maxWaves: 4,
+  driversPerWave: 4,
+  waveIntervalMinutes: 30,
+  priceStep: 0.08,
+};
 
 /**
  * Computes the median of a list.
@@ -64,7 +69,7 @@ export function inferOperationalProfile(
   const byRouteWave = new Map<string, Map<number, HistoricalOffer[]>>();
   for (const o of offers) {
     let waves = byRouteWave.get(o.routeId);
-    if (!waves) byRouteWave.set(o.routeId, (waves = new Map()));
+    if (!waves) byRouteWave.set(o.routeId, (waves = new Map<number, HistoricalOffer[]>()));
     const list = waves.get(o.wave) ?? [];
     list.push(o);
     waves.set(o.wave, list);
@@ -78,7 +83,8 @@ export function inferOperationalProfile(
       sizeCounts.set(list.length, (sizeCounts.get(list.length) ?? 0) + 1);
     }
   }
-  const inferredMaxWaves = maxWaves > 0 ? maxWaves : fallback('maxWaves', PROFILE_FALLBACK.maxWaves, 'no offers');
+  const inferredMaxWaves =
+    maxWaves > 0 ? maxWaves : fallback('maxWaves', PROFILE_FALLBACK.maxWaves, 'no offers');
 
   let driversPerWave = 0;
   let best = -1;
@@ -101,17 +107,26 @@ export function inferOperationalProfile(
     e.n += 1;
     minByWave.set(r.finalWave, e);
   }
-  const waveKeys = [...minByWave.keys()].filter((k) => (minByWave.get(k) as { n: number }).n >= 5).sort((a, b) => a - b);
+  const waveKeys = [...minByWave.keys()]
+    .filter((k) => (minByWave.get(k) as { n: number }).n >= 5)
+    .sort((a, b) => a - b);
   const gaps: number[] = [];
   for (let i = 0; i + 1 < waveKeys.length; i++) {
     if (waveKeys[i + 1] === waveKeys[i] + 1) {
-      gaps.push((minByWave.get(waveKeys[i + 1]) as { min: number }).min - (minByWave.get(waveKeys[i]) as { min: number }).min);
+      gaps.push(
+        (minByWave.get(waveKeys[i + 1]) as { min: number }).min -
+          (minByWave.get(waveKeys[i]) as { min: number }).min,
+      );
     }
   }
   const interval =
     gaps.length > 0 && median(gaps) > 0
       ? Math.round(median(gaps))
-      : fallback('waveIntervalMinutes', PROFILE_FALLBACK.waveIntervalMinutes, 'too few accepted waves to infer');
+      : fallback(
+          'waveIntervalMinutes',
+          PROFILE_FALLBACK.waveIntervalMinutes,
+          'too few accepted waves to infer',
+        );
 
   // price step: median of next/this price ratio over consecutive waves with price >= 50
   const ratios: number[] = [];

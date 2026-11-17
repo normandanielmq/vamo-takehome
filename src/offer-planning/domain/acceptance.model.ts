@@ -125,7 +125,9 @@ export class AcceptanceModel {
         );
       } else markets.push(market);
     }
-    const used = offers.filter((o) => !unsupported.has(o.market) && o.price > 0 && o.referencePrice > 0);
+    const used = offers.filter(
+      (o) => !unsupported.has(o.market) && o.price > 0 && o.referencePrice > 0,
+    );
     if (markets.length === 0 || used.length === 0) {
       return new AcceptanceModel(new Map(), 0, [], new Map(), unsupported, 0);
     }

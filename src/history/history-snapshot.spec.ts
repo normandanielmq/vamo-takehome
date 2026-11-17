@@ -59,7 +59,9 @@ describe('loadHistorySnapshot', () => {
     const p = fixturePaths('broken');
     // duplicate route_id is still fatal; remove it by using a copy with unique ids
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hist-'));
-    const routes = fs.readFileSync(p.routesFile, 'utf8').replace('R1,AAA,2026-08-17', 'R2,AAA,2026-08-17');
+    const routes = fs
+      .readFileSync(p.routesFile, 'utf8')
+      .replace('R1,AAA,2026-08-17', 'R2,AAA,2026-08-17');
     fs.writeFileSync(path.join(dir, 'routes.csv'), routes);
     const s = loadHistorySnapshot({ ...p, routesFile: path.join(dir, 'routes.csv') }, 'skip');
     expect(s.routes).toHaveLength(1);

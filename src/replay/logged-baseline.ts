@@ -21,7 +21,10 @@ export interface ConsistencyReport {
  * @param offers - Logged offers.
  * @returns Mismatch counts, with `mismatches` as their total.
  */
-export function checkConsistency(routes: HistoricalRoute[], offers: HistoricalOffer[]): ConsistencyReport {
+export function checkConsistency(
+  routes: HistoricalRoute[],
+  offers: HistoricalOffer[],
+): ConsistencyReport {
   const accepted = new Map<string, HistoricalOffer[]>();
   for (const o of offers) {
     if (o.response !== 'accepted') continue;
@@ -40,15 +43,21 @@ export function checkConsistency(routes: HistoricalRoute[], offers: HistoricalOf
   for (const r of routes) {
     const acc = accepted.get(r.routeId) ?? [];
     if (r.accepted) {
-      const match = acc.find((o) => o.driverId === r.acceptedDriverId) ?? (acc.length === 1 ? acc[0] : undefined);
+      const match =
+        acc.find((o) => o.driverId === r.acceptedDriverId) ??
+        (acc.length === 1 ? acc[0] : undefined);
       if (!match) report.filledWithoutAcceptedOffer += 1;
       else {
-        if (r.finalPrice !== null && Math.abs(match.offerPrice - r.finalPrice) > 1e-9) report.priceMismatches += 1;
+        if (r.finalPrice !== null && Math.abs(match.offerPrice - r.finalPrice) > 1e-9)
+          report.priceMismatches += 1;
         if (r.finalWave !== null && match.wave !== r.finalWave) report.waveMismatches += 1;
       }
     } else if (acc.length > 0) report.acceptedOfferWithoutFilledRoute += 1;
   }
   report.mismatches =
-    report.filledWithoutAcceptedOffer + report.acceptedOfferWithoutFilledRoute + report.priceMismatches + report.waveMismatches;
+    report.filledWithoutAcceptedOffer +
+    report.acceptedOfferWithoutFilledRoute +
+    report.priceMismatches +
+    report.waveMismatches;
   return report;
 }

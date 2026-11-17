@@ -55,7 +55,13 @@ export interface MetricSet {
  * All metric names in {@link MetricSet}, for iteration.
  */
 export const METRIC_KEYS: (keyof MetricSet)[] = [
-  'costPerPostedRoute', 'fillRate', 'wave1FillRate', 'meanMinutesToAccept', 'meanPaid', 'meanPaidOverReference', 'expectedOnTimeRate',
+  'costPerPostedRoute',
+  'fillRate',
+  'wave1FillRate',
+  'meanMinutesToAccept',
+  'meanPaid',
+  'meanPaidOverReference',
+  'expectedOnTimeRate',
 ];
 
 /**
@@ -65,7 +71,17 @@ export const METRIC_KEYS: (keyof MetricSet)[] = [
  * @returns Zeroed sums.
  */
 export function emptySums(cluster: string): RouteSums {
-  return { cluster, draws: 0, cost: 0, filled: 0, wave1: 0, minutes: 0, paid: 0, paidOverRef: 0, onTime: 0 };
+  return {
+    cluster,
+    draws: 0,
+    cost: 0,
+    filled: 0,
+    wave1: 0,
+    minutes: 0,
+    paid: 0,
+    paidOverRef: 0,
+    onTime: 0,
+  };
 }
 
 /**

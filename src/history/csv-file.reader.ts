@@ -64,7 +64,7 @@ export class CsvFileReader {
           try {
             values[column.name] = column.parse(record[column.name] ?? '');
           } catch (error) {
-            throw new Error(`column ${column.name}: ${(error as Error).message}`);
+            throw new Error(`column ${column.name}: ${(error as Error).message}`, { cause: error });
           }
         }
         rows.push(schema.build(values));

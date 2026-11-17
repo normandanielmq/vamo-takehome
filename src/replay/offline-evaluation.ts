@@ -38,7 +38,7 @@ export interface OfflineEvaluation {
 export function auc(pred: number[], y: boolean[]): number {
   const idx = pred.map((_, i) => i).sort((a, b) => pred[a] - pred[b]);
   const ranks = new Array<number>(pred.length);
-  for (let i = 0; i < idx.length; ) {
+  for (let i = 0; i < idx.length;) {
     let j = i;
     while (j + 1 < idx.length && pred[idx[j + 1]] === pred[idx[i]]) j++;
     const avg = (i + j) / 2 + 1;
@@ -66,7 +66,12 @@ export function auc(pred: number[], y: boolean[]): number {
  */
 export function logLoss(pred: number[], y: boolean[]): number {
   const eps = 1e-12;
-  return -pred.reduce((s, p, i) => s + (y[i] ? Math.log(Math.max(p, eps)) : Math.log(Math.max(1 - p, eps))), 0) / pred.length;
+  return (
+    -pred.reduce(
+      (s, p, i) => s + (y[i] ? Math.log(Math.max(p, eps)) : Math.log(Math.max(1 - p, eps))),
+      0,
+    ) / pred.length
+  );
 }
 
 /**
@@ -80,7 +85,14 @@ function calibrationRows(groups: Map<string, { p: number; y: boolean }[]>): Cali
     const n = rows.length;
     const mean = rows.reduce((s, r) => s + r.p, 0) / n;
     const obs = rows.filter((r) => r.y).length / n;
-    return { label, count: n, meanPrediction: mean, observedRate: obs, gap: mean - obs, twoStandardErrors: 2 * Math.sqrt(Math.max(mean * (1 - mean), 1e-9) / n) };
+    return {
+      label,
+      count: n,
+      meanPrediction: mean,
+      observedRate: obs,
+      gap: mean - obs,
+      twoStandardErrors: 2 * Math.sqrt(Math.max(mean * (1 - mean), 1e-9) / n),
+    };
   });
 }
 
@@ -94,10 +106,25 @@ function calibrationRows(groups: Map<string, { p: number; y: boolean }[]>): Cali
  * @param testRows - Test-window offers with outcomes.
  * @returns AUC, log-loss and calibration tables.
  */
-export function evaluateOffline(model: AcceptanceModel, priceWaveOnly: AcceptanceModel, testRows: TrainingOffer[]): OfflineEvaluation {
-  const rows = testRows.filter((r) => model.isSupported(r.market) && priceWaveOnly.isSupported(r.market));
+export function evaluateOffline(
+  model: AcceptanceModel,
+  priceWaveOnly: AcceptanceModel,
+  testRows: TrainingOffer[],
+): OfflineEvaluation {
+  const rows = testRows.filter(
+    (r) => model.isSupported(r.market) && priceWaveOnly.isSupported(r.market),
+  );
   const predict = (m: AcceptanceModel) =>
-    rows.map((r) => m.probability({ driverId: r.driverId, market: r.market, price: r.price, referencePrice: r.referencePrice, wave: r.wave }).p);
+    rows.map(
+      (r) =>
+        m.probability({
+          driverId: r.driverId,
+          market: r.market,
+          price: r.price,
+          referencePrice: r.referencePrice,
+          wave: r.wave,
+        }).p,
+    );
   const pm = predict(model);
   const pb = predict(priceWaveOnly);
   const y = rows.map((r) => r.accepted);

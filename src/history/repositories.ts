@@ -67,7 +67,8 @@ export class RouteHistoryRepository {
    */
   findScheduledBetween(from: Date, toExclusive?: Date): HistoricalRoute[] {
     return this.findAll().filter(
-      (r) => r.scheduledStart >= from && (toExclusive === undefined || r.scheduledStart < toExclusive),
+      (r) =>
+        r.scheduledStart >= from && (toExclusive === undefined || r.scheduledStart < toExclusive),
     );
   }
 
