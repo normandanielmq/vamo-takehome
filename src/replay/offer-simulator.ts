@@ -6,6 +6,9 @@ import { ReferencePriceModel } from '../offer-planning/domain/reference-price.mo
 import { uniformFromKey } from './hash-random';
 import { realizedCost, CostSettings, RouteSums } from './replay-metrics';
 
+/**
+ * Result of simulating one route for one draw.
+ */
 export interface RouteOutcome {
   filled: boolean;
   wave: number;
@@ -14,9 +17,24 @@ export interface RouteOutcome {
   driverId: string | null;
 }
 
+/**
+ * Creates the offer policy to use for a given route and draw.
+ */
 export type PolicyFactory = (route: HistoricalRoute, draw: number) => OfferPolicy;
 
+/**
+ * Key identifying a market and scheduled start time; routes sharing it compete for the same drivers.
+ *
+ * @param r - The route.
+ * @returns The slot key.
+ */
 export const slotKey = (r: HistoricalRoute): string => `${r.market}|${r.scheduledStart.getTime()}`;
+/**
+ * Key identifying a market-day, used as the bootstrap resampling cluster.
+ *
+ * @param r - The route.
+ * @returns The cluster key (market and UTC date).
+ */
 export const clusterKey = (r: HistoricalRoute): string => `${r.market}|${r.scheduledStart.toISOString().slice(0, 10)}`;
 
 /**
@@ -24,6 +42,17 @@ export const clusterKey = (r: HistoricalRoute): string => `${r.market}|${r.sched
  * policy's own model). Randomness is common: a uniform keyed by (route, driver, draw, offer index).
  */
 export class OfferSimulator {
+  /**
+   * Creates a simulator.
+   *
+   * @param environment - Acceptance model fitted on the test window, defining driver behavior.
+   * @param reference - Reference price model used to normalize prices.
+   * @param driversByMarket - Available drivers grouped by market.
+   * @param waveIntervalMinutes - Minutes between offer waves.
+   * @param seed - Seed for the common random numbers.
+   * @param costs - Cost settings for realized cost.
+   * @param onTimeRateByMarket - Expected on-time rate per market, credited to filled routes.
+   */
   constructor(
     private readonly environment: AcceptanceModel,
     private readonly reference: ReferencePriceModel,
@@ -34,7 +63,16 @@ export class OfferSimulator {
     private readonly onTimeRateByMarket: Map<string, number>,
   ) {}
 
-  /** Runs one policy over all routes for `draws` draws; returns per-route sums. */
+/**
+   * Runs one policy over all routes for `draws` draws and returns per-route sums.
+   *
+   * Routes are processed in start order; a driver who accepts a route in a slot is unavailable for other routes in that slot within the same draw.
+   *
+   * @param routes - Routes to simulate.
+   * @param factory - Builds the policy for each route and draw.
+   * @param draws - Number of Monte Carlo draws.
+   * @returns Per-route sums over all draws.
+   */
   run(routes: HistoricalRoute[], factory: PolicyFactory, draws: number): RouteSums[] {
     const ordered = [...routes].sort(
       (a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime() || a.routeId.localeCompare(b.routeId),
@@ -72,6 +110,18 @@ export class OfferSimulator {
     return [...sums.values()];
   }
 
+  /**
+   * Simulates offering one route wave by wave until a driver accepts or waves run out.
+   *
+   * Each offer uses a keyed uniform draw compared with the acceptance probability; the lowest uniform among accepters in a wave wins.
+   *
+   * @param route - The route to fill.
+   * @param pool - Candidate drivers still available.
+   * @param policy - Policy that plans the waves.
+   * @param draw - Draw index, part of the random key.
+   * @param ref - Reference price for the route.
+   * @returns The outcome (unfilled if the pool is empty or no one accepts).
+   */
   private simulateRoute(route: HistoricalRoute, pool: Candidate[], policy: OfferPolicy, draw: number, ref: number): RouteOutcome {
     if (pool.length === 0) return { filled: false, wave: 0, price: 0, minutes: 0, driverId: null };
     const plan: OfferPlan = policy.plan({

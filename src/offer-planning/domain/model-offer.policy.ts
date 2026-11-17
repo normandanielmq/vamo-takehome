@@ -9,11 +9,22 @@ import { ReferencePriceModel } from './reference-price.model';
 import { StartingPricePolicy } from './starting-price.policy';
 import { WaveBuilder } from './wave-builder';
 
+/**
+ * Model-driven policy: ranks drivers, builds waves, and picks the starting price minimizing expected cost.
+ */
 export class ModelOfferPolicy implements OfferPolicy {
   private readonly ranker: DriverRanker;
   private readonly builder = new WaveBuilder();
   private readonly pricer: StartingPricePolicy;
 
+  /**
+   * Creates the policy and wires the ranker and pricer.
+   *
+   * @param reference - Reference price model.
+   * @param acceptance - Trained acceptance model.
+   * @param config - Planning configuration.
+   * @param profile - Operational wave mechanics.
+   */
   constructor(
     private readonly reference: ReferencePriceModel,
     private readonly acceptance: AcceptanceModel,
@@ -24,6 +35,14 @@ export class ModelOfferPolicy implements OfferPolicy {
     this.pricer = new StartingPricePolicy(acceptance, new OutcomeEstimator(), config, profile);
   }
 
+  /**
+   * Plans offers for a route using the reference price, ranking, wave building and cost-optimal pricing.
+   *
+   * @param input - Route and candidate drivers.
+   * @returns The offer plan with expected outcome and assumptions.
+   * @throws UnsupportedMarketError If the route market has no reference price.
+   * @throws NoEligibleDriversError If there are no candidates.
+   */
   plan(input: PlanningInput): OfferPlan {
     const referencePrice = this.reference.priceFor(input.route);
     const market = input.route.market;

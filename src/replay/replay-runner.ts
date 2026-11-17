@@ -15,6 +15,11 @@ import { OfferSimulator, clusterKey, slotKey } from './offer-simulator';
 import { DifferenceIntervals, pairedClusterBootstrap } from './paired-bootstrap';
 import { MetricSet, metricsFromSums, realizedCost, RouteSums } from './replay-metrics';
 
+/**
+ * Tunable settings for a replay run.
+ *
+ * Fields cover Monte Carlo draws, seed, which windows to run, window overrides, bootstrap size and the planning config.
+ */
 export interface ReplayOptions {
   draws: number;
   seed: number;
@@ -24,6 +29,9 @@ export interface ReplayOptions {
   planning: OfferPlanningConfig;
 }
 
+/**
+ * Default replay options, used for any field the caller does not override.
+ */
 export const DEFAULT_REPLAY_OPTIONS: ReplayOptions = {
   draws: 200,
   seed: 42,
@@ -33,12 +41,18 @@ export const DEFAULT_REPLAY_OPTIONS: ReplayOptions = {
   planning: DEFAULT_PLANNING_CONFIG,
 };
 
+/**
+ * A single pass/fail validity check on a window result, with a human-readable detail string.
+ */
 export interface Gate {
   name: string;
   pass: boolean;
   detail: string;
 }
 
+/**
+ * Full results for one evaluation window: split sizes, metrics for logged/simulated/model policies, paired differences, offline diagnostics and validity gates.
+ */
 export interface WindowReport {
   window: WindowName;
   trainBefore: string;
@@ -59,6 +73,9 @@ export interface WindowReport {
   gates: Gate[];
 }
 
+/**
+ * Top-level replay output: data fingerprint and quality, the run options and one report per window.
+ */
 export interface ReplayReport {
   fingerprint: string;
   dataQuality: HistorySnapshot['quality'];
@@ -66,12 +83,34 @@ export interface ReplayReport {
   windows: WindowReport[];
 }
 
+/**
+ * Arithmetic mean of a list.
+ *
+ * @param xs - Values to average.
+ * @returns The mean, or 0 for an empty list.
+ */
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+/**
+ * Population standard deviation of a list.
+ *
+ * @param xs - Values to measure.
+ * @returns The standard deviation, or 0 for an empty list.
+ */
 const sd = (xs: number[]) => {
   const m = avg(xs);
   return Math.sqrt(avg(xs.map((x) => (x - m) ** 2)));
 };
 
+/**
+ * Runs the offline replay for the requested windows and assembles the report.
+ *
+ * Also adds a cross-window gate when both headline and early windows ran, since the effect should have the same sign in both.
+ *
+ * @param snapshot - Loaded history (routes, offers, drivers, quality) to replay.
+ * @param partial - Overrides merged over {@link DEFAULT_REPLAY_OPTIONS}.
+ * @returns The combined replay report.
+ * @throws Error If a window has no evaluable test routes; InsufficientDataError if a window split is too small.
+ */
 export function runReplay(snapshot: HistorySnapshot, partial: Partial<ReplayOptions> = {}): ReplayReport {
   const options = { ...DEFAULT_REPLAY_OPTIONS, ...partial };
   const windowOptions: WindowOptions = { ...DEFAULT_WINDOW_OPTIONS, ...options.window };
@@ -94,6 +133,18 @@ export function runReplay(snapshot: HistorySnapshot, partial: Partial<ReplayOpti
   };
 }
 
+/**
+ * Evaluates one window: trains models on the training split, simulates baseline and model policies on the test routes, and computes metrics, bootstrap differences, offline diagnostics and gates.
+ *
+ * The simulator environment is fitted on test data only, so it is independent of the policy under test.
+ *
+ * @param window - The window definition (train/test boundaries).
+ * @param snapshot - Full history snapshot.
+ * @param options - Resolved replay options.
+ * @param wo - Resolved window options (minimum route counts).
+ * @returns The report for this window.
+ * @throws Error If no test routes remain after dropping unsupported markets.
+ */
 function runWindow(window: EvaluationWindow, snapshot: HistorySnapshot, options: ReplayOptions, wo: WindowOptions): WindowReport {
   const split = splitWindow(window, snapshot.routes, snapshot.offers, wo);
   const models = OfferModelTrainer.train({ routes: split.trainRoutes, offers: split.trainOffers, drivers: snapshot.drivers }, options.planning);

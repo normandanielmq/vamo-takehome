@@ -6,6 +6,13 @@ import { loadHistorySnapshot } from '../history/history-snapshot';
 import { WindowName } from './evaluation-windows';
 import { DEFAULT_REPLAY_OPTIONS, ReplayOptions, ReplayReport, runReplay, WindowReport } from './replay-runner';
 
+/**
+ * Parses CLI flags (`--draws`, `--seed`, `--window`, `--holdout-days`, `--early-days`, `--cutoff`, `--data-dir`).
+ *
+ * @param argv - Arguments after the node and script names.
+ * @returns Replay options and an optional data directory.
+ * @throws Error If a numeric flag is not a number or `--window` is invalid.
+ */
 function parseArgs(argv: string[]): { options: Partial<ReplayOptions>; dataDir?: string } {
   const get = (name: string) => {
     const i = argv.indexOf(`--${name}`);
@@ -37,10 +44,29 @@ function parseArgs(argv: string[]): { options: Partial<ReplayOptions>; dataDir?:
   };
 }
 
+/**
+ * Formats a number with fixed decimals.
+ *
+ * @param x - Number to format.
+ * @param d - Decimal places.
+ * @returns The formatted string.
+ */
 const f = (x: number, d = 2) => x.toFixed(d);
+/**
+ * Formats one policy's metrics as a fixed-width table row.
+ *
+ * @param label - Row label.
+ * @param m - Metrics to show.
+ * @returns The formatted line.
+ */
 const row = (label: string, m: WindowReport['loggedBaseline']) =>
   `${label.padEnd(20)} ${f(m.costPerPostedRoute).padStart(8)} ${f(m.fillRate, 3).padStart(8)} ${f(m.wave1FillRate, 3).padStart(8)} ${f(m.meanMinutesToAccept, 1).padStart(8)} ${f(m.meanPaid).padStart(9)} ${f(m.meanPaidOverReference, 3).padStart(9)} ${f(m.expectedOnTimeRate, 3).padStart(8)}`;
 
+/**
+ * Prints a human-readable replay report to the console.
+ *
+ * @param report - The report to print.
+ */
 function print(report: ReplayReport): void {
   console.log(`Data fingerprint ${report.fingerprint}; draws ${report.options.draws}, seed ${report.options.seed}`);
   console.log(`Costs: unfilled ${report.options.costs.unfilledPenaltyMultiplier}x reference, extra wave ${report.options.costs.delayCostPerWaveMultiplier}x reference`);
@@ -66,6 +92,9 @@ function print(report: ReplayReport): void {
   }
 }
 
+/**
+ * CLI entry point: loads data, runs the replay, prints it and writes `reports/replay-latest.json`.
+ */
 function main(): void {
   const { options, dataDir } = parseArgs(process.argv.slice(2));
   if (dataDir) process.env.DATA_DIR = dataDir;

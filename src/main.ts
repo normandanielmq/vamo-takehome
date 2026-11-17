@@ -5,6 +5,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { loadAppConfig } from './config/app.config';
 
+/**
+ * Creates the Nest app with strict request validation and Swagger docs, then starts listening.
+ * @returns A promise that resolves once the server is listening.
+ * @throws If the app fails to start or the configuration is invalid.
+ */
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(

@@ -1,5 +1,8 @@
 import { HistoricalOffer, HistoricalRoute } from '../../history/history.types';
 
+/**
+ * Wave mechanics (count, size, spacing, price escalation) plus warnings about inferred defaults.
+ */
 export interface OperationalProfile {
   maxWaves: number;
   driversPerWave: number;
@@ -8,23 +11,50 @@ export interface OperationalProfile {
   warnings: string[];
 }
 
+/**
+ * Explicit values that take precedence over inferred profile fields.
+ */
 export type ProfileOverrides = Partial<Omit<OperationalProfile, 'warnings'>>;
 
+/**
+ * Defaults used when a profile field cannot be inferred from history.
+ */
 export const PROFILE_FALLBACK = { maxWaves: 4, driversPerWave: 4, waveIntervalMinutes: 30, priceStep: 0.08 };
 
+/**
+ * Computes the median of a list.
+ *
+ * @param xs - Non-empty list of numbers.
+ * @returns The median value.
+ */
 const median = (xs: number[]): number => {
   const s = [...xs].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 };
 
-/** Derives wave mechanics from history so nothing about them is hardcoded. */
+/**
+ * Derives wave mechanics from history so nothing about them is hardcoded.
+ *
+ * @param routes - Historical routes.
+ * @param offers - Historical offers.
+ * @param overrides - Values that replace inferred ones.
+ * @returns The profile, with warnings for any fallback used.
+ */
 export function inferOperationalProfile(
   routes: HistoricalRoute[],
   offers: HistoricalOffer[],
   overrides: ProfileOverrides = {},
 ): OperationalProfile {
   const warnings: string[] = [];
+  /**
+   * Records a warning and returns a default value.
+   *
+   * @param name - Profile field name.
+   * @param value - Default value.
+   * @param why - Reason inference failed.
+   * @returns The default value.
+   */
   const fallback = (name: string, value: number, why: string): number => {
     warnings.push(`${name}: ${why}; using default ${value}`);
     return value;

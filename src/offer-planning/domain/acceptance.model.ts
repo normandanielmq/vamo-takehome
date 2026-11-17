@@ -2,6 +2,9 @@ import { ColdStartModel, DriverAttributes } from './cold-start.model';
 import { ModelTrainingError } from './errors';
 import { solveLinearSystem } from './linear-algebra';
 
+/**
+ * A historical offer used as one training observation for the acceptance model.
+ */
 export interface TrainingOffer {
   driverId: string;
   market: string;
@@ -11,6 +14,9 @@ export interface TrainingOffer {
   accepted: boolean;
 }
 
+/**
+ * Tunable hyperparameters and market-support thresholds for training the acceptance model.
+ */
 export interface AcceptanceTrainingOptions {
   ridge: number;
   globalRidge: number;
@@ -20,6 +26,9 @@ export interface AcceptanceTrainingOptions {
   tolerance: number;
 }
 
+/**
+ * Default training options used when none are overridden.
+ */
 export const DEFAULT_ACCEPTANCE_OPTIONS: AcceptanceTrainingOptions = {
   ridge: 2,
   globalRidge: 1e-4,
@@ -29,8 +38,14 @@ export const DEFAULT_ACCEPTANCE_OPTIONS: AcceptanceTrainingOptions = {
   tolerance: 1e-6,
 };
 
+/**
+ * How a driver effect was obtained: a trained effect (`none`), predicted from attributes, or the market average.
+ */
 export type ColdStartKind = 'none' | 'attributes' | 'market';
 
+/**
+ * Inputs needed to predict the acceptance probability of a single offer.
+ */
 export interface ProbabilityInput {
   driverId: string;
   market: string;
@@ -40,16 +55,35 @@ export interface ProbabilityInput {
   attributes?: DriverAttributes;
 }
 
+/**
+ * Logistic function mapping a log-odds value to a probability.
+ *
+ * @param z - Log-odds value.
+ * @returns Probability in (0, 1).
+ */
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-z));
 
 /**
- * logit p = alpha_market + delta_driver + beta * ln(price / reference) + gamma_wave
+ * Logistic acceptance model:
+ *
+ * `logit p = alpha_market + delta_driver + beta * ln(price / reference) + gamma_wave`
+ *
  * Trained by block-coordinate Newton: a dense step on the global parameters, then an
  * independent 1-D step per driver.
  */
 export class AcceptanceModel {
   private coldStart = ColdStartModel.disabled();
 
+  /**
+   * Creates a model from already-fitted parameters; use {@link AcceptanceModel.train} instead.
+   *
+   * @param alpha - Per-market intercepts.
+   * @param beta - Coefficient on the log price ratio.
+   * @param gamma - Wave terms; `gamma[k]` is the wave-(k+2) term relative to wave 1.
+   * @param delta - Per-driver effects.
+   * @param unsupported - Markets excluded from training, mapped to the reason.
+   * @param passes - Number of Newton passes used during training.
+   */
   private constructor(
     private readonly alpha: Map<string, number>,
     readonly beta: number,
@@ -60,6 +94,14 @@ export class AcceptanceModel {
     readonly passes: number,
   ) {}
 
+  /**
+   * Fits the model on historical offers, skipping markets with too little data.
+   *
+   * @param offers - Historical offers to train on.
+   * @param options - Overrides for {@link DEFAULT_ACCEPTANCE_OPTIONS}.
+   * @returns A trained model (empty if no market has enough support).
+   * @throws ModelTrainingError If the global Hessian is singular or training does not converge.
+   */
   static train(
     offers: TrainingOffer[],
     options: Partial<AcceptanceTrainingOptions> = {},
@@ -189,45 +231,102 @@ export class AcceptanceModel {
     );
   }
 
+  /**
+   * Attaches a cold-start model used to estimate effects for drivers unseen in training.
+   *
+   * @param model - The cold-start model to use.
+   * @returns This model, for chaining.
+   */
   attachColdStart(model: ColdStartModel): this {
     this.coldStart = model;
     return this;
   }
 
+  /**
+   * Lists markets the model was trained on.
+   *
+   * @returns Supported market identifiers.
+   */
   supportedMarkets(): string[] {
     return [...this.alpha.keys()];
   }
 
+  /**
+   * Checks whether a market was trained.
+   *
+   * @param market - Market identifier.
+   * @returns True if the market has a trained intercept.
+   */
   isSupported(market: string): boolean {
     return this.alpha.has(market);
   }
 
+  /**
+   * Checks whether a driver has a trained effect.
+   *
+   * @param driverId - Driver identifier.
+   * @returns True if the driver appeared in training.
+   */
   knowsDriver(driverId: string): boolean {
     return this.delta.has(driverId);
   }
 
+  /**
+   * Gets a driver's trained effect.
+   *
+   * @param driverId - Driver identifier.
+   * @returns The effect, or undefined if the driver is unknown.
+   */
   driverEffect(driverId: string): number | undefined {
     return this.delta.get(driverId);
   }
 
+  /**
+   * Exposes all trained driver effects.
+   *
+   * @returns Read-only map of driver id to effect.
+   */
   driverEffects(): ReadonlyMap<string, number> {
     return this.delta;
   }
 
-  /** Highest wave with its own trained term (1 when the data had a single wave). */
+  /**
+   * Highest wave with its own trained term (1 when the data had a single wave).
+   *
+   * @returns The highest trained wave number.
+   */
   get maxTrainedWave(): number {
     return this.gamma.length + 1;
   }
 
+  /**
+   * Checks whether a wave is beyond the trained range.
+   *
+   * @param wave - Wave number (1-based).
+   * @returns True if the wave has no trained term of its own.
+   */
   isExtrapolated(wave: number): boolean {
     return wave > this.maxTrainedWave;
   }
 
+  /**
+   * Gets the wave term, reusing the last trained term for waves beyond the trained range.
+   *
+   * @param wave - Wave number (1-based).
+   * @returns The wave effect on log-odds (0 for wave 1 or when untrained).
+   */
   waveTerm(wave: number): number {
     if (wave <= 1 || this.gamma.length === 0) return 0;
     return this.gamma[Math.min(wave - 2, this.gamma.length - 1)];
   }
 
+  /**
+   * Predicts the probability that a driver accepts an offer, falling back to cold-start estimates for unknown drivers.
+   *
+   * @param input - Offer, driver, and market details.
+   * @returns The probability and which cold-start source (if any) was used.
+   * @throws Error If the market was not trained.
+   */
   probability(input: ProbabilityInput): { p: number; coldStart: ColdStartKind } {
     const alpha = this.alpha.get(input.market);
     if (alpha === undefined) throw new Error(`acceptance model has no market "${input.market}"`);
@@ -252,6 +351,12 @@ export class AcceptanceModel {
   }
 }
 
+/**
+ * Limits a Newton step to [-5, 5] to keep updates stable.
+ *
+ * @param s - Raw step.
+ * @returns The clamped step.
+ */
 function clampStep(s: number): number {
   return Math.max(-5, Math.min(5, s));
 }

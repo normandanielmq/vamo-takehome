@@ -17,4 +17,5 @@ import { OfferPlanningService } from './offer-planning.service';
     { provide: APP_FILTER, useClass: OfferPlanExceptionFilter },
   ],
 })
+/** Wires the offer planning controller, service, model registry, config and exception filter. */
 export class OfferPlanningModule {}

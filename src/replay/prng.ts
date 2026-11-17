@@ -1,3 +1,9 @@
+/**
+ * Creates a seeded Mulberry32 pseudo-random generator.
+ *
+ * @param seed - Integer seed.
+ * @returns A function returning a uniform value in [0, 1) on each call.
+ */
 export function mulberry(seed: number): () => number {
   let a = seed >>> 0;
   return () => {

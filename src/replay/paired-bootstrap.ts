@@ -1,21 +1,43 @@
 import { mulberry } from './prng';
 import { addSums, emptySums, METRIC_KEYS, MetricSet, metricsFromSums, RouteSums } from './replay-metrics';
 
+/**
+ * A point estimate with a 95% percentile interval.
+ */
 export interface Interval {
   estimate: number;
   low: number;
   high: number;
 }
 
+/**
+ * Interval for each metric in {@link MetricSet}.
+ */
 export type DifferenceIntervals = Record<keyof MetricSet, Interval>;
 
+/**
+ * Aggregates route sums by cluster.
+ *
+ * @param sums - Per-route sums.
+ * @returns Summed values keyed by cluster.
+ */
 function groupByCluster(sums: RouteSums[]): Map<string, RouteSums> {
   const out = new Map<string, RouteSums>();
   for (const s of sums) out.set(s.cluster, addSums(out.get(s.cluster) ?? emptySums(s.cluster), s));
   return out;
 }
 
-/** Cluster bootstrap over market-days of the model-minus-baseline difference. */
+/**
+ * Cluster bootstrap over market-days of the model-minus-baseline difference.
+ *
+ * Clusters are resampled with replacement and the same clusters are used for both arms, preserving the pairing.
+ *
+ * @param model - Model policy sums per route.
+ * @param baseline - Baseline policy sums per route.
+ * @param resamples - Number of bootstrap resamples.
+ * @param seed - Seed for the resampling stream.
+ * @returns Point estimate and 2.5%/97.5% bounds per metric.
+ */
 export function pairedClusterBootstrap(
   model: RouteSums[],
   baseline: RouteSums[],
@@ -51,6 +73,13 @@ export function pairedClusterBootstrap(
   return out;
 }
 
+/**
+ * Computes the metric-wise difference a - b.
+ *
+ * @param a - Minuend metrics.
+ * @param b - Subtrahend metrics.
+ * @returns The difference.
+ */
 function diff(a: MetricSet, b: MetricSet): MetricSet {
   const out = {} as MetricSet;
   for (const k of METRIC_KEYS) out[k] = a[k] - b[k];

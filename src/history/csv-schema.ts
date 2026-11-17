@@ -1,7 +1,9 @@
 import { Driver, HistoricalOffer, HistoricalRoute, OfferResponse, asMarket } from './history.types';
 
+/** A CSV record keyed by normalized header name. */
 export type RawRow = Record<string, string>;
 
+/** Describes how one CSV column is parsed. */
 export interface ColumnSpec<T> {
   /** Header name, matched case-insensitively after trimming. */
   name: string;
@@ -9,37 +11,72 @@ export interface ColumnSpec<T> {
   parse: (raw: string) => T;
 }
 
+/** Describes a CSV file: its columns and how to build a typed row from parsed values. */
 export interface CsvSchema<Row> {
   file: string;
   columns: ColumnSpec<unknown>[];
   build: (values: Record<string, unknown>) => Row;
 }
 
+/**
+ * Tells whether a raw cell is empty or whitespace.
+ * @param raw - Raw cell text.
+ * @returns `true` when blank.
+ */
 const isBlank = (raw: string): boolean => raw.trim() === '';
 
+/**
+ * Parses a required, non-empty string.
+ * @param raw - Raw cell text.
+ * @returns The trimmed string.
+ * @throws If the value is empty.
+ */
 export const str = (raw: string): string => {
   const v = raw.trim();
   if (v === '') throw new Error('empty value');
   return v;
 };
 
+/**
+ * Wraps a parser so blank cells become `null`.
+ * @param parse - Parser used for non-blank cells.
+ * @returns A parser returning `null` for blank input.
+ */
 export const nullable =
   <T>(parse: (raw: string) => T) =>
   (raw: string): T | null =>
     isBlank(raw) ? null : parse(raw);
 
+/**
+ * Parses a finite number.
+ * @param raw - Raw cell text.
+ * @returns The number.
+ * @throws If the value is blank or not a finite number.
+ */
 export const num = (raw: string): number => {
   const v = Number(raw.trim());
   if (raw.trim() === '' || !Number.isFinite(v)) throw new Error(`"${raw}" is not a number`);
   return v;
 };
 
+/**
+ * Parses an integer.
+ * @param raw - Raw cell text.
+ * @returns The integer.
+ * @throws If the value is not a number or not an integer.
+ */
 export const int = (raw: string): number => {
   const v = num(raw);
   if (!Number.isInteger(v)) throw new Error(`"${raw}" is not an integer`);
   return v;
 };
 
+/**
+ * Parses a boolean from `true`/`false` or `1`/`0` (case-insensitive).
+ * @param raw - Raw cell text.
+ * @returns The boolean.
+ * @throws If the value is not a recognized boolean.
+ */
 export const bool = (raw: string): boolean => {
   const v = raw.trim().toLowerCase();
   if (v === 'true' || v === '1') return true;
@@ -47,7 +84,12 @@ export const bool = (raw: string): boolean => {
   throw new Error(`"${raw}" is not a boolean`);
 };
 
-/** ISO 8601; a timestamp without an offset is read as UTC. */
+/**
+ * Parses an ISO 8601 date; a timestamp without an offset is read as UTC.
+ * @param raw - Raw cell text.
+ * @returns The date.
+ * @throws If the value is not a valid ISO date.
+ */
 export const isoDate = (raw: string): Date => {
   const v = raw.trim();
   const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(v);
@@ -56,18 +98,32 @@ export const isoDate = (raw: string): Date => {
   return date;
 };
 
+/**
+ * Parses an {@link OfferResponse} (case-insensitive).
+ * @param raw - Raw cell text.
+ * @returns The response.
+ * @throws If the value is not a known response.
+ */
 export const offerResponse = (raw: string): OfferResponse => {
   const v = raw.trim().toLowerCase();
   if (v === 'accepted' || v === 'declined' || v === 'no_response') return v;
   throw new Error(`"${raw}" is not a valid response`);
 };
 
+/**
+ * Creates a column spec.
+ * @param name - Normalized header name.
+ * @param parse - Cell parser.
+ * @param required - Whether the column must be present; defaults to `true`.
+ * @returns The column spec.
+ */
 const col = <T>(name: string, parse: (raw: string) => T, required = true): ColumnSpec<unknown> => ({
   name,
   parse,
   required,
 });
 
+/** Schema for the routes CSV file. */
 export const routesSchema: CsvSchema<HistoricalRoute> = {
   file: 'routes',
   columns: [
@@ -100,6 +156,7 @@ export const routesSchema: CsvSchema<HistoricalRoute> = {
   }),
 };
 
+/** Schema for the offers CSV file. */
 export const offersSchema: CsvSchema<HistoricalOffer> = {
   file: 'offers',
   columns: [
@@ -118,6 +175,7 @@ export const offersSchema: CsvSchema<HistoricalOffer> = {
   }),
 };
 
+/** Schema for the drivers CSV file; rating and activity columns are optional. */
 export const driversSchema: CsvSchema<Driver> = {
   file: 'drivers',
   columns: [

@@ -1,5 +1,8 @@
 import { HistoricalOffer, HistoricalRoute } from '../history/history.types';
 
+/**
+ * Counts of disagreements between route outcomes and logged offers.
+ */
 export interface ConsistencyReport {
   routesChecked: number;
   filledWithoutAcceptedOffer: number;
@@ -9,7 +12,15 @@ export interface ConsistencyReport {
   mismatches: number;
 }
 
-/** Cross-file checks: accepted offers must agree with the route's recorded outcome. */
+/**
+ * Cross-file checks: accepted offers must agree with the route's recorded outcome.
+ *
+ * Flags filled routes with no matching accepted offer, accepted offers on unfilled routes, and price or wave mismatches.
+ *
+ * @param routes - Routes to check.
+ * @param offers - Logged offers.
+ * @returns Mismatch counts, with `mismatches` as their total.
+ */
 export function checkConsistency(routes: HistoricalRoute[], offers: HistoricalOffer[]): ConsistencyReport {
   const accepted = new Map<string, HistoricalOffer[]>();
   for (const o of offers) {

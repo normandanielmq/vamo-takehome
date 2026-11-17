@@ -7,16 +7,19 @@ import { Candidate, OfferPlan, PlanningRoute } from './domain/offer-plan';
 import { OperationalProfile } from './domain/operational-profile';
 import { OfferModelRegistry } from './offer-model.registry';
 
+/** Input to plan creation: the route and candidate drivers. */
 export interface PlanCommand {
   route: PlanningRoute;
   drivers: ({ driverId: string } & DriverAttributes)[];
 }
 
+/** A requested driver left out of the plan and why. */
 export interface ExcludedDriver {
   driverId: string;
   reason: 'duplicate' | 'market_mismatch';
 }
 
+/** Outcome of plan creation. */
 export interface PlanResult {
   plan: OfferPlan;
   excludedDrivers: ExcludedDriver[];
@@ -24,13 +27,27 @@ export interface PlanResult {
   operationalProfile: OperationalProfile;
 }
 
+/** Builds offer plans using the current trained models and known driver records. */
 @Injectable()
 export class OfferPlanningService {
+  /**
+   * @param registry - Provides the current models and policy.
+   * @param drivers - Repository of known drivers.
+   */
   constructor(
     private readonly registry: OfferModelRegistry,
     private readonly drivers: DriverRepository,
   ) {}
 
+  /**
+   * Creates an offer plan, excluding duplicate and wrong-market drivers.
+   *
+   * Known drivers use their historical attributes; unknown drivers use the attributes supplied in the request.
+   * @param command - Route and candidate drivers.
+   * @returns The plan, excluded drivers, model version and operational profile.
+   * @throws {@link UnsupportedMarketError} If the route market is not supported.
+   * @throws {@link NoEligibleDriversError} If no candidates remain after exclusions.
+   */
   createPlan(command: PlanCommand): PlanResult {
     const { models, policy, modelVersion } = this.registry.current();
     const market = command.route.market;

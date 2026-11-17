@@ -1,12 +1,26 @@
 import { RankedCandidate } from './driver-ranker';
 
+/**
+ * A driver's position in a wave, flagged if they were already offered earlier.
+ */
 export interface WaveSlot {
   ranked: RankedCandidate;
   isReoffer: boolean;
 }
 
+/**
+ * Assigns ranked drivers to offer waves.
+ */
 export class WaveBuilder {
-  /** Fills waves in rank order; cycles back to the top when the list runs out and re-offers are allowed. */
+  /**
+   * Fills waves in rank order; cycles back to the top when the list runs out and re-offers are allowed.
+   *
+   * @param ranked - Drivers ordered by rank.
+   * @param maxWaves - Maximum number of waves.
+   * @param driversPerWave - Drivers per wave.
+   * @param allowReoffer - Whether drivers may be offered again in later waves.
+   * @returns Slots per wave (empty if there are no drivers).
+   */
   build(ranked: RankedCandidate[], maxWaves: number, driversPerWave: number, allowReoffer: boolean): WaveSlot[][] {
     if (ranked.length === 0) return [];
     const perWave = Math.min(driversPerWave, ranked.length);

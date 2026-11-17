@@ -6,4 +6,5 @@ import { DriverRepository, OfferHistoryRepository, RouteHistoryRepository } from
   providers: [HistorySnapshotStore, DriverRepository, RouteHistoryRepository, OfferHistoryRepository],
   exports: [HistorySnapshotStore, DriverRepository, RouteHistoryRepository, OfferHistoryRepository],
 })
+/** Provides the history snapshot store and the repositories built on it. */
 export class HistoryModule {}

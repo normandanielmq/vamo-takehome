@@ -4,6 +4,7 @@ import {
   Max, MaxLength, Min, ValidateNested,
 } from 'class-validator';
 
+/** Route details supplied in a plan request. */
 export class RouteDto {
   @IsOptional() @IsString() routeId?: string;
   @IsString() @IsNotEmpty() @MaxLength(32) market!: string;
@@ -12,12 +13,14 @@ export class RouteDto {
   @IsNumber() @IsPositive() totalMiles!: number;
 }
 
+/** A driver available for the route; rating and activity are used only if the driver is not in the history. */
 export class AvailableDriverDto {
   @IsString() @IsNotEmpty() driverId!: string;
   @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
   @IsOptional() @IsInt() @Min(0) routesCompleted90d?: number;
 }
 
+/** Request body for creating an offer plan. */
 export class CreateOfferPlanDto {
   @ValidateNested() @Type(() => RouteDto) route!: RouteDto;
 

@@ -1,4 +1,11 @@
-/** Solves A x = b by Gaussian elimination with partial pivoting. Throws if singular. */
+/**
+ * Solves A x = b by Gaussian elimination with partial pivoting.
+ *
+ * @param a - Square coefficient matrix.
+ * @param b - Right-hand side vector.
+ * @returns The solution vector x.
+ * @throws Error If the matrix is singular.
+ */
 export function solveLinearSystem(a: number[][], b: number[]): number[] {
   const n = b.length;
   const m = a.map((row, i) => [...row, b[i]]);
@@ -24,7 +31,14 @@ export function solveLinearSystem(a: number[][], b: number[]): number[] {
   return x;
 }
 
-/** Ordinary least squares via the normal equations. Rows already include any intercept column. */
+/**
+ * Ordinary least squares via the normal equations. Rows already include any intercept column.
+ *
+ * @param rows - Design matrix rows.
+ * @param targets - Target value per row.
+ * @returns Fitted coefficients.
+ * @throws Error If there are no rows, fewer rows than parameters, or the system is singular.
+ */
 export function fitLeastSquares(rows: number[][], targets: number[]): number[] {
   if (rows.length === 0) throw new Error('no rows');
   const k = rows[0].length;

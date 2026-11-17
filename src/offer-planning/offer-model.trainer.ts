@@ -6,12 +6,14 @@ import { OfferPlanningConfig } from './domain/offer-planning.config';
 import { inferOperationalProfile, OperationalProfile } from './domain/operational-profile';
 import { ReferencePriceModel } from './domain/reference-price.model';
 
+/** Historical data the models are trained on. */
 export interface TrainingData {
   routes: HistoricalRoute[];
   offers: HistoricalOffer[];
   drivers: Driver[];
 }
 
+/** Models and metadata produced by training, including which markets can be served. */
 export interface TrainedOfferModels {
   profile: OperationalProfile;
   reference: ReferencePriceModel;
@@ -20,8 +22,19 @@ export interface TrainedOfferModels {
   unsupportedMarkets: Map<string, string>;
 }
 
-/** Pure function over arrays: no I/O, so the replay can train on any slice. */
+/**
+ * Trains all offer models from in-memory data.
+ *
+ * Pure function over arrays: no I/O, so the replay can train on any slice.
+ */
 export class OfferModelTrainer {
+  /**
+   * Trains the reference price and acceptance models, including cold-start handling for unseen drivers.
+   * @param data - Routes, offers and drivers to train on.
+   * @param config - Planning configuration (profile overrides).
+   * @returns The trained models, inferred profile and market support.
+   * @throws {@link ModelTrainingError} If no market has enough data.
+   */
   static train(data: TrainingData, config: OfferPlanningConfig): TrainedOfferModels {
     const reference = ReferencePriceModel.fit(data.routes);
     const routeById = new Map(data.routes.map((r) => [r.routeId, r]));

@@ -1,7 +1,13 @@
 import { AcceptanceModel, TrainingOffer } from '../offer-planning/domain/acceptance.model';
 
+/**
+ * Predicted-probability bucket edges for calibration (last edge is slightly above 1 so 1.0 is included).
+ */
 export const CALIBRATION_EDGES = [0, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 1.0000001];
 
+/**
+ * Calibration summary for one group of predictions: mean predicted vs observed rate and the gap with a 2-standard-error band.
+ */
 export interface CalibrationRow {
   label: string;
   count: number;
@@ -11,6 +17,9 @@ export interface CalibrationRow {
   twoStandardErrors: number;
 }
 
+/**
+ * Offline accuracy diagnostics for the model against a price+wave-only baseline.
+ */
 export interface OfflineEvaluation {
   offers: number;
   model: { auc: number; logLoss: number };
@@ -19,6 +28,13 @@ export interface OfflineEvaluation {
   calibrationByWave: CalibrationRow[];
 }
 
+/**
+ * Area under the ROC curve via the rank-sum statistic, with tied predictions given average ranks.
+ *
+ * @param pred - Predicted probabilities.
+ * @param y - Observed outcomes, aligned with `pred`.
+ * @returns The AUC, or NaN if there are no positives or no negatives.
+ */
 export function auc(pred: number[], y: boolean[]): number {
   const idx = pred.map((_, i) => i).sort((a, b) => pred[a] - pred[b]);
   const ranks = new Array<number>(pred.length);
@@ -41,11 +57,24 @@ export function auc(pred: number[], y: boolean[]): number {
   return pos === 0 || neg === 0 ? NaN : (rankSum - (pos * (pos + 1)) / 2) / (pos * neg);
 }
 
+/**
+ * Mean negative log-likelihood of predictions, clamped to avoid log(0).
+ *
+ * @param pred - Predicted probabilities.
+ * @param y - Observed outcomes, aligned with `pred`.
+ * @returns The log-loss.
+ */
 export function logLoss(pred: number[], y: boolean[]): number {
   const eps = 1e-12;
   return -pred.reduce((s, p, i) => s + (y[i] ? Math.log(Math.max(p, eps)) : Math.log(Math.max(1 - p, eps))), 0) / pred.length;
 }
 
+/**
+ * Summarizes each group as a calibration row.
+ *
+ * @param groups - Predictions and outcomes keyed by group label.
+ * @returns One row per group.
+ */
 function calibrationRows(groups: Map<string, { p: number; y: boolean }[]>): CalibrationRow[] {
   return [...groups].map(([label, rows]) => {
     const n = rows.length;
@@ -55,7 +84,16 @@ function calibrationRows(groups: Map<string, { p: number; y: boolean }[]>): Cali
   });
 }
 
-/** Offline check at the logged prices and waves of the test offers. */
+/**
+ * Offline check at the logged prices and waves of the test offers.
+ *
+ * Compares the full model with a price+wave-only model on AUC and log-loss and reports calibration by probability bucket and by wave, on markets both models support.
+ *
+ * @param model - The full acceptance model under test.
+ * @param priceWaveOnly - Heavily regularized comparison model.
+ * @param testRows - Test-window offers with outcomes.
+ * @returns AUC, log-loss and calibration tables.
+ */
 export function evaluateOffline(model: AcceptanceModel, priceWaveOnly: AcceptanceModel, testRows: TrainingOffer[]): OfflineEvaluation {
   const rows = testRows.filter((r) => model.isSupported(r.market) && priceWaveOnly.isSupported(r.market));
   const predict = (m: AcceptanceModel) =>

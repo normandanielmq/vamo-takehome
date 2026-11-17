@@ -3,11 +3,20 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateOfferPlanDto } from './dto/create-offer-plan.dto';
 import { OfferPlanningService } from './offer-planning.service';
 
+/** HTTP endpoint for creating offer plans. */
 @ApiTags('offer-plans')
 @Controller('offer-plans')
 export class OfferPlanningController {
+  /** @param service - Service that builds offer plans. */
   constructor(private readonly service: OfferPlanningService) {}
 
+  /**
+   * Creates an offer plan for a route and a set of available drivers.
+   * @param dto - Validated request body.
+   * @returns The plan with excluded drivers, model version, operational profile and a disclaimer note.
+   * @throws {@link UnsupportedMarketError} If the market is not in the data (mapped to 422).
+   * @throws {@link NoEligibleDriversError} If every driver is excluded (mapped to 422).
+   */
   @Post()
   @ApiOperation({ summary: 'Rank drivers, group them into waves and pick a starting price for a route' })
   @ApiResponse({ status: 200, description: 'Offer plan (probabilities are model estimates)' })
